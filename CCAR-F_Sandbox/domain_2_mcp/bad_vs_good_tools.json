@@ -1,0 +1,34 @@
+{
+  "bad_tool": {
+    "name": "search_database",
+    "description": "Searches the database.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        }
+      },
+      "required": ["query"]
+    }
+  },
+  "good_tool": {
+    "name": "search_customer_support_tickets",
+    "description": "Searches the Zendesk customer support database for historical tickets. \nUse this tool when you need to find past interactions, refund requests, or complaints from a specific customer.\nDo NOT use this tool to look up current order status or inventory (use lookup_order instead).\n\nExamples:\n- query: 'refunds for user u123'\n- query: 'complaints about shipping delays in March'\n\nReturns a maximum of 10 tickets sorted by date descending.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "The search term, including customer IDs, email addresses, or keywords like 'refund'."
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Number of results to return (max 10). Default is 5."
+        }
+      },
+      "required": ["query"]
+    }
+  },
+  "exam_takeaway": "Tool descriptions are the PRIMARY mechanism for LLM tool selection. Minimal or ambiguous descriptions lead to unreliable tool selection. Include purpose, inputs, outputs, examples, and boundaries."
+}

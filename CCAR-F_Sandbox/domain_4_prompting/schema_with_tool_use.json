@@ -1,0 +1,32 @@
+{
+  "name": "extract_invoice_data",
+  "description": "Extracts structured data from an invoice document.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "is_invoice": {
+        "type": "boolean",
+        "description": "True if the document is an actual invoice, false if it is a quote, receipt, or other document type."
+      },
+      "total_due": {
+        "type": ["number", "null"],
+        "description": "The final total amount due. Must be null if the document is not an invoice."
+      },
+      "po_number": {
+        "type": ["string", "null"],
+        "description": "The Purchase Order number. This field is nullable. If a PO is not explicitly present, return null. Do not fabricate a value."
+      },
+      "currency": {
+        "type": "string",
+        "enum": ["USD", "EUR", "GBP", "JPY", "other"],
+        "description": "The currency of the invoice."
+      },
+      "currency_other_detail": {
+        "type": ["string", "null"],
+        "description": "If currency is 'other', provide the exact currency string found in the document here. Otherwise null."
+      }
+    },
+    "required": ["is_invoice", "total_due", "po_number", "currency", "currency_other_detail"]
+  },
+  "exam_takeaway": "Using tool_use with JSON schema GUARANTEES syntax-compliant JSON. To prevent semantic hallucination (fabricating data), use optional/nullable fields ('type': ['string', 'null']). For extensibility, use the 'other' enum value paired with a free-text detail field."
+}

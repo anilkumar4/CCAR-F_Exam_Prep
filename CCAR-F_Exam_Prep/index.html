@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Interactive exam preparation platform for the Claude Certified Architect – Foundations (CCAR-F) certification. Study guides, flashcards, practice quizzes, and mock exams.">
+  <title>CCAR-F Exam Prep — Claude Certified Architect Foundations</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- ===== Sidebar Navigation ===== -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">CCAR-F Exam Prep</div>
+        <div class="sidebar-subtitle">Claude Certified Architect</div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item active" data-module="dashboard">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-module="course">
+          <span class="nav-icon">🎓</span>
+          <span>Interactive Course</span>
+          <span class="nav-badge">30 Lessons</span>
+        </div>
+        <div class="nav-item" data-module="study">
+          <span class="nav-icon">📖</span>
+          <span>Study Guide</span>
+          <span class="nav-badge">5 domains</span>
+        </div>
+        <div class="nav-item" data-module="flashcards">
+          <span class="nav-icon">🃏</span>
+          <span>Flashcards</span>
+          <span class="nav-badge">76 cards</span>
+        </div>
+        <div class="nav-item" data-module="quiz">
+          <span class="nav-icon">📝</span>
+          <span>Practice Quiz</span>
+          <span class="nav-badge">65 Qs</span>
+        </div>
+        <div class="nav-item" data-module="scenarios">
+          <span class="nav-icon">🎯</span>
+          <span>Scenario Deep Dives</span>
+          <span class="nav-badge">6</span>
+        </div>
+        <div class="nav-item" data-module="cheatsheets">
+          <span class="nav-icon">📋</span>
+          <span>Cheat Sheets</span>
+        </div>
+        <div class="nav-item" data-module="mock-exam">
+          <span class="nav-icon">🏆</span>
+          <span>Mock Exam</span>
+          <span class="nav-badge">120 min</span>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        CCAR-F · Exam Code: CCAR-F<br>
+        Version 1.0 · July 2026
+      </div>
+    </aside>
+
+    <!-- ===== Main Content Area ===== -->
+    <main class="main-content">
+
+      <!-- Dashboard Module -->
+      <div class="module active" id="module-dashboard">
+        <div class="page-header">
+          <h1 class="page-title"><span class="page-title-gradient">Exam Readiness Dashboard</span></h1>
+          <p class="page-description">Track your preparation progress across all 5 domains. Your readiness score is weighted by domain importance on the actual exam.</p>
+        </div>
+        <div id="dashboard-content"></div>
+      </div>
+
+      <!-- Course Module -->
+      <div class="module" id="module-course">
+        <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h1 class="page-title"><span class="page-title-gradient">Interactive Course</span></h1>
+            <p class="page-description">Master the exam concepts through self-paced, runnable lessons.</p>
+          </div>
+          <div id="course-progress-header" style="text-align:right"></div>
+        </div>
+        <div id="course-content"></div>
+      </div>
+
+      <!-- Study Guide Module -->
+      <div class="module" id="module-study">
+        <div class="page-header">
+          <h1 class="page-title"><span class="page-title-gradient">Interactive Study Guide</span></h1>
+          <p class="page-description">Master all 5 domains and 30 task statements. Expand each topic to see knowledge items and required skills. Mark topics as studied to track progress.</p>
+        </div>
+        <div id="study-content"></div>
+      </div>
+
+      <!-- Flashcards Module -->
+      <div class="module" id="module-flashcards">
+        <div class="page-header">
+          <h1 class="page-title"><span class="page-title-gradient">Flashcard Engine</span></h1>
+          <p class="page-description">Review key concepts with interactive flashcards. Click to flip, then rate your recall. Cards you mark "Need Review" will appear more frequently.</p>
+        </div>
+        <div id="flashcards-content"></div>
+      </div>
+
+      <!-- Quiz Module -->
+      <div class="module" id="module-quiz">
+        <div class="page-header">
+          <h1 class="page-title"><span class="page-title-gradient">Practice Quiz</span></h1>
+          <p class="page-description">Test your knowledge with 65 exam-style questions. Each question is scenario-grounded and mapped to specific task statements, just like the real exam.</p>
+        </div>
+        <div id="quiz-content"></div>
+      </div>
+
+      <!-- Scenarios Module -->
+      <div class="module" id="module-scenarios">
+        <div class="page-header">
+          <h1 class="page-title"><span class="page-title-gradient">Scenario Deep Dives</span></h1>
+          <p class="page-description">Explore all 6 exam scenarios as interactive case studies. Practice architectural decision-making with "What would you do?" decision points and instant feedback.</p>
+        </div>
+        <div id="scenarios-content"></div>
+      </div>
+
+      <!-- Cheatsheets Module -->
+      <div class="module" id="module-cheatsheets">
+        <div class="page-header">
+          <h1 class="page-title"><span class="page-title-gradient">Quick Reference Cheat Sheets</span></h1>
+          <p class="page-description">Concise, printable reference cards for each domain. All key concepts, patterns, anti-patterns, and decision trees in one place.</p>
+        </div>
+        <div id="cheatsheets-content"></div>
+      </div>
+
+      <!-- Mock Exam Module -->
+      <div class="module" id="module-mock-exam">
+        <div class="page-header">
+          <h1 class="page-title"><span class="page-title-gradient">Mock Exam Simulator</span></h1>
+          <p class="page-description">Simulate the real CCAR-F exam experience. 60 questions, 120 minutes, scaled scoring with a 720 pass threshold.</p>
+        </div>
+        <div id="mock-exam-content"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Data Files -->
+  <script src="data/course-content.js"></script>
+  <script src="data/study-content.js"></script>
+  <script src="data/flashcards.js"></script>
+  <script src="data/questions.js"></script>
+  <script src="data/scenarios.js"></script>
+  <script src="data/cheatsheets.js"></script>
+
+  <!-- Application -->
+  <script src="js/app.js"></script>
+</body>
+</html>

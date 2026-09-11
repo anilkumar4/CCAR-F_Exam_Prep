@@ -1,0 +1,9 @@
+{"custom_id": "doc_123", "params": {"model": "claude-3-5-sonnet-20241022", "max_tokens": 1024, "messages": [{"role": "user", "content": "Extract data from Document 1..."}]}}
+{"custom_id": "doc_124", "params": {"model": "claude-3-5-sonnet-20241022", "max_tokens": 1024, "messages": [{"role": "user", "content": "Extract data from Document 2..."}]}}
+{"custom_id": "doc_125", "params": {"model": "claude-3-5-sonnet-20241022", "max_tokens": 1024, "messages": [{"role": "user", "content": "Extract data from Document 3..."}]}}
+
+# EXAM CONCEPTS FOR MESSAGE BATCHES API:
+# 1. Used for massive cost savings (50%) on non-blocking workflows (e.g. overnight processing).
+# 2. NO GUARANTEED LATENCY SLA (up to 24 hours). Do not use for real-time user requests.
+# 3. NO MULTI-TURN TOOL CALLING. The batch API does not support a loop where Claude calls a tool, gets a response, and continues. It is single-turn only.
+# 4. custom_id: Used to correlate the asynchronous response back to the specific request.

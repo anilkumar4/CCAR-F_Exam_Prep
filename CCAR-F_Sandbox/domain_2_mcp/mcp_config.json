@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "jira-cloud": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-jira"],
+      "env": {
+        "JIRA_BASE_URL": "https://your-domain.atlassian.net",
+        "JIRA_USER_EMAIL": "${JIRA_USER_EMAIL}",
+        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
+      }
+    },
+    "local-postgres": {
+      "command": "python",
+      "args": ["-m", "mcp_postgres"],
+      "env": {
+        "PG_URL": "${LOCAL_PG_CONNECTION_STRING}"
+      }
+    }
+  }
+}
