@@ -8,7 +8,7 @@ This repository contains everything you need to master Agentic Architecture, the
 
 The workspace is divided into three main components:
 
-1. **`docs/` (The Web Portal)**
+1. **`utilities/` (The Web Portal)**
    A fully interactive, browser-based learning platform. It includes:
    - **Interactive Course:** 30 paginated lessons covering every official task statement with *runnable CLI terminal simulations*.
    - **Flashcard Engine:** 76 spaced-repetition flashcards.
@@ -34,7 +34,7 @@ You do not need to install Node, React, or any complex build tools to run the ex
    ```
 2. Navigate to the Exam Prep folder:
    ```bash
-   cd Claude-Code-Architect/docs
+   cd Claude-Code-Architect/utilities
    ```
 3. Open `index.html` in any modern web browser (Chrome, Edge, Firefox, Safari).
 
@@ -50,7 +50,7 @@ Want to host this web portal on the internet so you can study from your phone or
 2. Go to your repository's **Settings** tab.
 3. Click on **Pages** in the left sidebar.
 4. Under **Build and deployment**, set the **Source** to `Deploy from a branch`.
-5. Under **Branch**, select `main` (or `master`), and change the folder from `/ (root)` to `/docs`.
+5. Under **Branch**, select `main` (or `master`), and change the folder to `/ (root)`.
 6. Click **Save**.
 
 Within a few minutes, GitHub will provide you with a live URL (e.g., `https://yourusername.github.io/Claude-Code-Architect/CCAR-F_Exam_Prep/`) where your personal exam portal is hosted!
