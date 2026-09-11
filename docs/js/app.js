@@ -179,7 +179,7 @@ const App = {
           <div style="font-size:0.85rem;color:var(--text-secondary)">Review all 5 domains and 30 task statements</div>
         </div>
         <div class="card" style="cursor:pointer" onclick="App.navigate('quiz')">
-          <div style="font-size:2rem;margin-bottom:8px">📝</div>
+          <div style="font-size:2rem;margin-bottom:8px"><i data-lucide="check-circle" style="width:24px;height:24px;margin-right:8px;vertical-align:middle;color:var(--accent-cyan)"></i></div>
           <div style="font-weight:700;margin-bottom:4px">Practice Quiz</div>
           <div style="font-size:0.85rem;color:var(--text-secondary)">Test your knowledge with 65 exam-style questions</div>
         </div>
@@ -196,7 +196,7 @@ const App = {
           ${quizzes.slice(-5).reverse().map((q, i) => `
             <div style="display:flex;align-items:center;gap:16px;padding:10px 0;${i < Math.min(4, quizzes.length-1) ? 'border-bottom:1px solid var(--border-color)' : ''}">
               <div style="font-weight:700;color:${q.score >= 72 ? 'var(--accent-green)' : 'var(--accent-red)'}">${q.score}%</div>
-              <div style="flex:1;font-size:0.85rem;color:var(--text-secondary)">${q.mode === 'mock' ? '🏆 Mock Exam' : '📝 Practice Quiz'} — ${q.totalQuestions} questions</div>
+              <div style="flex:1;font-size:0.85rem;color:var(--text-secondary)">${q.mode === 'mock' ? '<i data-lucide="award" style="width:14px;height:14px;margin-right:4px;vertical-align:middle"></i> Mock Exam' : '<i data-lucide="check-circle" style="width:24px;height:24px;margin-right:8px;vertical-align:middle;color:var(--accent-cyan)"></i> Practice Quiz'} — ${q.totalQuestions} questions</div>
               <div style="font-size:0.75rem;color:var(--text-muted)">${new Date(q.date).toLocaleDateString()}</div>
             </div>
           `).join('')}
@@ -270,14 +270,7 @@ const Course = {
             </div>
           `;
         }).join('')}
-        ${COURSE_DATA.length < 30 ? `
-          <div class="card" style="display:flex;align-items:center;justify-content:center;background:var(--surface-light);border:1px dashed var(--border-color)">
-            <div style="color:var(--text-muted);text-align:center">
-              <div>More domains coming soon...</div>
-              <div style="font-size:0.8rem;margin-top:4px">Additional task statements will unlock as you progress.</div>
-            </div>
-          </div>
-        ` : ''}
+        
       </div>
     `;
   },
@@ -506,7 +499,7 @@ const StudyGuide = {
                 </span>
               </div>
               <div class="ts-content" id="content-${ts.id}">
-                <div class="ts-section-title" style="color:${domain.color}">📚 Knowledge Of</div>
+                <div class="ts-section-title" style="color:${domain.color}"><i data-lucide="book-open" style="width:16px;height:16px;margin-right:8px;vertical-align:middle"></i> Knowledge Of</div>
                 <ul class="ts-list">
                   ${ts.knowledge.map(k => `<li>${k}</li>`).join('')}
                 </ul>
@@ -670,7 +663,7 @@ const Quiz = {
     container.innerHTML = `
       <div class="quiz-setup">
         <div class="card" style="padding:32px">
-          <h3 style="font-weight:700;margin-bottom:24px;text-align:center">📝 Practice Quiz Setup</h3>
+          <h3 style="font-weight:700;margin-bottom:24px;text-align:center"><i data-lucide="check-circle" style="width:24px;height:24px;margin-right:8px;vertical-align:middle;color:var(--accent-cyan)"></i> Practice Quiz Setup</h3>
           <div class="quiz-option-group">
             <label>Domain Filter</label>
             <select class="quiz-select" id="quiz-domain-filter">
@@ -766,7 +759,7 @@ const Quiz = {
 
         <div class="quiz-question-card">
           <div class="quiz-scenario-tag badge" style="background:${domainInfo.color}20;color:${domainInfo.color}">
-            📋 Scenario ${q.scenario}: ${q.scenarioTitle} · ${domainInfo.icon} Domain ${q.domain} · TS ${q.taskStatement}
+            <i data-lucide="file-text" style="width:20px;height:20px;margin-right:8px;vertical-align:middle;color:var(--accent-purple)"></i> Scenario ${q.scenario}: ${q.scenarioTitle} · ${domainInfo.icon} Domain ${q.domain} · TS ${q.taskStatement}
           </div>
           <div class="quiz-question-text">${q.question}</div>
           <div class="quiz-options">
@@ -974,7 +967,7 @@ const Scenarios = {
           ${s.keyTools.map(t => `<span class="tag">${t}</span>`).join('')}
         </div>
 
-        <h3 style="font-weight:700;margin-bottom:16px">🎯 Interactive Decision Points</h3>
+        <h3 style="font-weight:700;margin-bottom:16px"><i data-lucide="target" style="width:16px;height:16px;margin-right:4px;vertical-align:middle"></i> Interactive Decision Points</h3>
         <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px">Think about each situation, then click "Reveal" to see the correct approach and the underlying principle.</p>
         ${s.decisionPoints.map((dp, i) => `
           <div class="decision-point" id="dp-${s.id}-${i}">
@@ -988,7 +981,7 @@ const Scenarios = {
           </div>
         `).join('')}
 
-        <h3 style="font-weight:700;margin:32px 0 16px">📝 Related Practice Questions</h3>
+        <h3 style="font-weight:700;margin:32px 0 16px"><i data-lucide="check-circle" style="width:24px;height:24px;margin-right:8px;vertical-align:middle;color:var(--accent-cyan)"></i> Related Practice Questions</h3>
         <div class="btn-group">
           <button class="btn btn-primary" onclick="Scenarios.currentScenario=null;document.getElementById('quiz-domain-filter')||true;App.navigate('quiz')">Practice Quiz for This Scenario →</button>
         </div>
