@@ -36,6 +36,22 @@ const App = {
   },
 
   setupNavigation() {
+    
+    // Mobile navigation bindings
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const sidebar = document.querySelector('.sidebar');
+    if (mobileBtn && sidebarOverlay) {
+      mobileBtn.addEventListener('click', () => {
+        sidebar.classList.add('open');
+        sidebarOverlay.classList.add('active');
+      });
+      sidebarOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('active');
+      });
+    }
+
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', () => {
         const module = item.dataset.module;
@@ -188,6 +204,23 @@ const App = {
           <div style="font-weight:700;margin-bottom:4px">Mock Exam</div>
           <div style="font-size:0.85rem;color:var(--text-secondary)">Simulate the real exam: 60 questions, 120 min, 720 pass</div>
         </div>
+      </div>
+      
+      <div class="card" style="margin-top:20px; border-color: rgba(6, 182, 212, 0.4);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="background: rgba(6, 182, 212, 0.15); padding:8px; border-radius:8px; color:var(--accent-cyan);">
+            <i data-lucide="github"></i>
+          </div>
+          <div>
+            <h3 style="font-weight:700;">Recommended Python Jupyter Workbooks</h3>
+          </div>
+        </div>
+        <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:16px;">
+          One of the best Python Jupyter workbooks for Claude Certified Architect - Foundations (CCAR-F) from a public repo. Specially created for practicing CCAR-F agentic principles with hands-on AI shop assistant examples.
+        </p>
+        <a href="https://github.com/termidy/ccar-f" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="width:100%; justify-content:center; border-color:var(--accent-cyan); color:var(--accent-cyan); text-decoration:none;">
+          <i data-lucide="external-link" style="width:16px;height:16px;margin-right:8px;"></i> View GitHub Repository
+        </a>
       </div>
 
       ${quizzes.length > 0 ? `
