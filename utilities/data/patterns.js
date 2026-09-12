@@ -224,5 +224,197 @@ const prompt = \`Facts: \${JSON.stringify(caseFacts)}\nHistory: \${history}\`;
     `,
     flaw: "Over-constraining the model with exact token/position counting.",
     explanation: "LLMs operate on sub-word tokens and do not 'count' words, characters, or specific positions reliably during generation. Over-constraining mechanics leads to degraded output quality as the model focuses on the math rather than the semantics."
+  },
+  {
+    id: 11,
+    domain: 2,
+    title: "Hallucination-Prone Schema Design",
+    antiPattern: `
+{
+  "name": "create_user",
+  "input_schema": {
+    "properties": {
+      "username": { "type": "string" },
+      "role": { "type": "string" }
+    }
+  }
+}
+    `,
+    correctPattern: `
+{
+  "name": "create_user",
+  "input_schema": {
+    "properties": {
+      "username": { "type": "string" },
+      "role": { "type": "string", "enum": ["admin", "editor", "viewer"] }
+    },
+    "required": ["username", "role"]
+  }
+}
+    `,
+    flaw: "Missing enums and required fields.",
+    explanation: "If you don't provide an enum for constrained string fields, the LLM will hallucinate roles like 'super_admin' or 'user'. Always use 'enum' for categorical data, and explicitly mark fields as 'required' to prevent incomplete tool calls."
+  },
+  {
+    id: 12,
+    domain: 1,
+    title: "The 'Just Use GPT' Routing",
+    antiPattern: `
+// Routing Logic
+const routerPrompt = "Read this text and decide if it goes to the DB agent or API agent.";
+const destination = await llm.generate(routerPrompt, userInput);
+    `,
+    correctPattern: `
+// Routing Logic with Tool Choice
+const routerPrompt = "Classify the user intent.";
+const destination = await llm.toolCall(routerPrompt, userInput, {
+  tools: [
+    { name: "route_to_db", description: "Use for historical queries" },
+    { name: "route_to_api", description: "Use for live data" }
+  ]
+});
+    `,
+    flaw: "Using raw text generation for deterministic routing.",
+    explanation: "Relying on raw text generation for routing forces you to parse unpredictable text. Using Tool Calling (function calling) forces the LLM to output a guaranteed JSON structure, making routing robust and deterministic."
+  },
+  {
+    id: 13,
+    domain: 4,
+    title: "Implicit Negative Constraints",
+    antiPattern: `
+"Summarize this document. Do not include quotes, do not use bullet points, do not exceed 3 paragraphs, and do not use jargon."
+    `,
+    correctPattern: `
+"Summarize this document.
+Format: 2-3 paragraphs.
+Style: Plain text (no quotes, no bullets), 8th-grade reading level.
+Focus: Key outcomes and next steps."
+    `,
+    flaw: "Stacking multiple negative ('do not') constraints.",
+    explanation: "LLMs struggle with long lists of negative constraints because they focus attention on the exact things you want to avoid. Reframe negative constraints into positive, explicit instructions (e.g., 'Do not use jargon' -> 'Use 8th-grade reading level')."
+  },
+  {
+    id: 14,
+    domain: 3,
+    title: "Ignoring Claude Code's Pre-computation",
+    antiPattern: `
+// The user asks Claude Code: "What does calculate_tax() do?"
+// Claude Code runs grep, reads 5 files, and answers.
+// The next day, user asks again: "What does calculate_tax() do?"
+    `,
+    correctPattern: `
+// Create a persistent architecture document
+// Run: claude -c "Explain calculate_tax() and save it to docs/TAX_SYSTEM.md"
+// Next day, Claude Code natively reads TAX_SYSTEM.md in its context.
+    `,
+    flaw: "Treating Claude Code as a stateless search engine.",
+    explanation: "Claude Code is powerful, but having it re-discover architecture via grep every session is slow and costly. Have Claude Code document its findings into persistent markdown files so they become part of its immediate context in future sessions."
+  },
+  {
+    id: 15,
+    domain: 5,
+    title: "Over-Relying on LLM Memory for Math",
+    antiPattern: `
+"The user has a $500 balance. They bought a $32 item, a $14 item, and applied a 15% discount. What is their new balance?"
+    `,
+    correctPattern: `
+"The user has a $500 balance. They bought a $32 item, a $14 item, and applied a 15% discount."
+// Agent uses a tool:
+{
+  "name": "calculate_cart_total",
+  "input": { "subtotal": 46, "discount_pct": 15 }
+}
+    `,
+    flaw: "Asking the LLM to perform arithmetic.",
+    explanation: "LLMs predict the next token; they do not have a built-in calculator. They frequently hallucinate math, especially with decimals or multiple steps. Always provide a calculator tool or perform the math programmatically and feed the result back to the LLM."
+  },
+  {
+    id: 16,
+    domain: 2,
+    title: "Vague Tool Error Handling",
+    antiPattern: `
+try {
+  executeTool(args);
+} catch (e) {
+  return "Error occurred.";
+}
+    `,
+    correctPattern: `
+try {
+  executeTool(args);
+} catch (e) {
+  return \`Error: \${e.message}. The user ID must be a 16-character UUID. Please check your input and try again.\`;
+}
+    `,
+    flaw: "Returning opaque errors to the LLM.",
+    explanation: "When a tool fails, the LLM receives the error string as context. If the error is just 'Failed', the LLM will hallucinate a fix or give up. Return highly descriptive errors that tell the LLM exactly *why* it failed and *how* to fix the input."
+  },
+  {
+    id: 17,
+    domain: 1,
+    title: "Single-Pass Complex Generation",
+    antiPattern: `
+"Write a complete, production-ready React application for a shopping cart, including state management, CSS, and API integration. Output all 5 files now."
+    `,
+    correctPattern: `
+// Step 1 (Agent): "Outline the architecture and state management for a React shopping cart."
+// Step 2 (Agent): "Generate the CSS variables."
+// Step 3 (Agent): "Generate the Cart component using the architecture."
+    `,
+    flaw: "Attempting complex, multi-file generation in a single zero-shot prompt.",
+    explanation: "LLMs degrade in quality and adherence when asked to do too much in one pass. Use a 'Plan and Execute' pattern where the agent first outputs a plan, validates it, and then iterates through the generation step-by-step."
+  },
+  {
+    id: 18,
+    domain: 5,
+    title: "Unbounded History Growth",
+    antiPattern: `
+let messages = [];
+messages.push({role: "user", content: "Hi"});
+messages.push({role: "assistant", content: "Hello"});
+// 500 turns later...
+const response = await anthropic.messages.create({ messages });
+    `,
+    correctPattern: `
+// Implement a sliding window with a rolling summary
+let messages = window.slice(-10); // Keep last 10 turns
+let systemPrompt = \`System Context: \${rollingSummary}\`;
+const response = await anthropic.messages.create({ system: systemPrompt, messages });
+    `,
+    flaw: "Letting the messages array grow infinitely.",
+    explanation: "Passing the entire raw history eventually hits the token limit, increases latency drastically, and degrades the model's ability to focus on the current turn. You must implement history pruning (sliding window + summarization)."
+  },
+  {
+    id: 19,
+    domain: 4,
+    title: "Burying the Lead in Prompts",
+    antiPattern: `
+"Please look at this data. [10,000 words of data]. Based on the data above, extract the email address."
+    `,
+    correctPattern: `
+"Extract the email address from the data below.
+<data>
+[10,000 words of data]
+</data>
+Remember, only output the email address."
+    `,
+    flaw: "Placing the core instruction at the very end of a massive prompt.",
+    explanation: "In long context windows, attention can wane in the middle (the 'lost in the middle' phenomenon). Place the primary instruction at the very top, provide the context inside XML tags, and optionally repeat the instruction at the very end."
+  },
+  {
+    id: 20,
+    domain: 3,
+    title: "Running Claude Code in the Wrong Directory",
+    antiPattern: `
+// User opens terminal at C:\
+$ claude -c "fix the bug in the authentication module"
+    `,
+    correctPattern: `
+// User navigates to specific microservice
+$ cd /src/services/auth-service
+$ claude -c "fix the bug in login.js"
+    `,
+    flaw: "Running the agent globally without scoping.",
+    explanation: "Claude Code searches and analyzes files relative to where it is executed. Running it at the root of a massive monorepo causes it to waste time scanning irrelevant projects. Always scope the agent to the tightest relevant directory."
   }
 ];
