@@ -575,6 +575,586 @@ if (confidence < 0.9) {
     `,
     flaw: "Synthesizing multi-source data without citations.",
     explanation: "Task Statement 5.6: Preserve information provenance. When an agent aggregates data from multiple sources, it must be explicitly prompted to retain inline citations. Without provenance, the output cannot be verified."
+  }  ,
+  {
+    id: 31,
+    domain: 1,
+    taskStatement: "1.1",
+    title: "Static Execution Graphs",
+    antiPattern: `
+async function runAgent() {
+  await step1_research();
+  await step2_compile();
+  await step3_format();
+}
+    `,
+    correctPattern: `
+async function runAgent() {
+  let state = "research";
+  while (state !== "done") {
+    const response = await llm.route(state);
+    state = response.nextAction;
+    await executeAction(state);
+  }
+}
+    `,
+    flaw: "Forcing autonomous agents into static, linear execution chains.",
+    explanation: "Task Statement 1.1: Design agentic loops. Agents must be able to dynamically route their own execution (e.g., returning to research if compilation fails) rather than being forced into rigid, deterministic pipelines."
+  },
+  {
+    id: 32,
+    domain: 1,
+    taskStatement: "1.2",
+    title: "Silent Subagent Failures",
+    antiPattern: `
+// Coordinator ignores subagent output and proceeds
+const result = await subagent.execute();
+return "The subagent finished successfully.";
+    `,
+    correctPattern: `
+// Coordinator verifies subagent output
+const result = await subagent.execute();
+if (!result.includes("Required Data")) {
+  return await subagent.execute("You missed the required data. Try again.");
+}
+return result;
+    `,
+    flaw: "Coordinator blindly assuming the subagent succeeded.",
+    explanation: "Task Statement 1.2: Orchestrate multi-agent systems. The coordinator is responsible for evaluating the quality and completeness of subagent outputs. It must implement iterative refinement loops to correct subagent mistakes."
+  },
+  {
+    id: 33,
+    domain: 1,
+    taskStatement: "1.3",
+    title: "Implicit Context Inheritance",
+    antiPattern: `
+// Spawning a subagent and assuming it knows the context
+const subagent = new SubAgent();
+await subagent.ask("What did the user just say?");
+    `,
+    correctPattern: `
+// Explicitly passing context
+const subagent = new SubAgent();
+await subagent.ask(\`The user asked: '\${userQuery}'. Answer this.\`);
+    `,
+    flaw: "Assuming subagents inherit the coordinator's memory.",
+    explanation: "Task Statement 1.3: Configure subagent invocation. Subagents are spawned with blank slates. You must explicitly inject necessary context (prior findings, user intents, rules) directly into their invocation prompt."
+  },
+  {
+    id: 34,
+    domain: 1,
+    taskStatement: "1.4",
+    title: "Prompting for Security Constraints",
+    antiPattern: `
+"You are a helpful assistant. NEVER execute bash commands that delete files (like rm or rmdir)."
+    `,
+    correctPattern: `
+// Implementing a programmatic gate in the tool executor
+function executeBash(cmd) {
+  if (cmd.includes("rm ")) throw new Error("Deletion is forbidden.");
+  return exec(cmd);
+}
+    `,
+    flaw: "Relying on LLM compliance for destructive operations.",
+    explanation: "Task Statement 1.4: Implement enforcement patterns. Do not rely on prompt engineering to prevent destructive actions. Security and compliance rules must be enforced programmatically via execution hooks or middleware."
+  },
+  {
+    id: 35,
+    domain: 1,
+    taskStatement: "1.5",
+    title: "Exposing PII to the Agent",
+    antiPattern: `
+// Returning raw user records from the DB to the LLM
+const userRecord = await db.getUser(userId); 
+// { id: 1, name: "John", ssn: "000-00-0000", passwordHash: "..." }
+return JSON.stringify(userRecord);
+    `,
+    correctPattern: `
+// Normalizing and masking data in the tool hook
+const userRecord = await db.getUser(userId); 
+return JSON.stringify({ id: userRecord.id, name: userRecord.name });
+    `,
+    flaw: "Leaking sensitive, unnecessary fields to the LLM context.",
+    explanation: "Task Statement 1.5: Apply SDK hooks for data normalization. Use tool interception hooks to scrub Personally Identifiable Information (PII) and internal hashes before the data enters the LLM context window."
+  },
+  {
+    id: 36,
+    domain: 1,
+    taskStatement: "1.6",
+    title: "Shallow Task Decomposition",
+    antiPattern: `
+// Decomposing "Build a website" into one subtask
+await uiAgent("Build the HTML, CSS, and JS for a dashboard.");
+    `,
+    correctPattern: `
+// Decomposing by discrete lifecycle phases
+const html = await skeletonAgent("Build HTML skeleton");
+const css = await styleAgent(\`Style this HTML: \${html}\`);
+const js = await logicAgent(\`Add logic to this UI: \${html}\`);
+    `,
+    flaw: "Creating sub-tasks that are still too broad for reliable execution.",
+    explanation: "Task Statement 1.6: Design task decomposition. If a subagent task still requires multiple distinct skills (e.g., visual design AND complex logic), it is too broad. Decompose into narrow, single-responsibility steps."
+  },
+  {
+    id: 37,
+    domain: 1,
+    taskStatement: "1.7",
+    title: "Destructive Session Overwrites",
+    antiPattern: `
+// User wants to try an alternative approach
+// Agent modifies the existing conversation state
+conversation.push({ role: "user", content: "Let's try a different idea." });
+    `,
+    correctPattern: `
+// Forking the session for divergent exploration
+const newSessionId = await db.forkSession(currentSessionId);
+// Continue exploring the alternative idea in newSessionId
+    `,
+    flaw: "Mutating a stable session state to explore risky alternatives.",
+    explanation: "Task Statement 1.7: Manage session forking. When exploring divergent approaches from a shared baseline (e.g., trying a different architectural pattern), use fork-based session management to preserve the original state."
+  },
+  {
+    id: 38,
+    domain: 2,
+    taskStatement: "2.1",
+    title: "The God Tool",
+    antiPattern: `
+{
+  "name": "do_everything",
+  "description": "Can read files, write files, search the web, and send emails.",
+  "input_schema": { ... 50 properties ... }
+}
+    `,
+    correctPattern: `
+// Split into narrow CRUD tools
+[
+  { "name": "read_file" },
+  { "name": "write_file" },
+  { "name": "search_web" }
+]
+    `,
+    flaw: "Designing massive, multi-purpose tools.",
+    explanation: "Task Statement 2.1: Design effective tool interfaces. Massive tools with dozens of optional parameters confuse the model and cause frequent schema validation errors. Design single-responsibility CRUD tools."
+  },
+  {
+    id: 39,
+    domain: 2,
+    taskStatement: "2.2",
+    title: "Crashing on Invalid Schema",
+    antiPattern: `
+// Tool executor crashes the whole server if arguments are invalid
+if (!args.filepath) {
+  throw new Error("Missing filepath! Shutting down.");
+}
+    `,
+    correctPattern: `
+// Returning the error gracefully as a tool response
+if (!args.filepath) {
+  return "Error: Missing required argument 'filepath'. Please try again.";
+}
+    `,
+    flaw: "Throwing fatal exceptions instead of returning structured errors.",
+    explanation: "Task Statement 2.2: Implement structured error responses. LLMs frequently hallucinate tool arguments. Tools must catch schema errors and return them as text to the LLM so it can self-correct, rather than crashing the orchestrator."
+  },
+  {
+    id: 40,
+    domain: 2,
+    taskStatement: "2.3",
+    title: "Forced Tool Choice in Dynamic Loops",
+    antiPattern: `
+// Forcing the agent to use a specific tool in an open-ended loop
+const response = await llm.generate(prompt, {
+  tool_choice: { type: "tool", name: "search_db" }
+});
+    `,
+    correctPattern: `
+// Allowing the agent to decide (auto)
+const response = await llm.generate(prompt, {
+  tool_choice: { type: "auto" }
+});
+    `,
+    flaw: "Using forced `tool_choice` when the agent needs autonomy.",
+    explanation: "Task Statement 2.3: Configure tool choice. Forced tool choice is useful for deterministic extraction (forcing a JSON schema), but breaks autonomous agentic loops where the model needs to decide between multiple tools or returning text."
+  },
+  {
+    id: 41,
+    domain: 2,
+    taskStatement: "2.4",
+    title: "Ignoring SSE Reconnection",
+    antiPattern: `
+// Initiating SSE connection and assuming it stays alive forever
+const mcp = new SSEClient("https://mcp.server.com/sse");
+    `,
+    correctPattern: `
+const mcp = new SSEClient("https://mcp.server.com/sse");
+mcp.on('disconnect', async () => {
+  await mcp.reconnect();
+});
+    `,
+    flaw: "Failing to handle transient network disconnects in MCP SSE clients.",
+    explanation: "Task Statement 2.4: Integrate MCP servers. When using Server-Sent Events (SSE) for remote MCP integration, you must implement resilient reconnection logic, as long-running agents will encounter dropped connections."
+  },
+  {
+    id: 42,
+    domain: 2,
+    taskStatement: "2.5",
+    title: "Custom Bash Tools",
+    antiPattern: `
+// Building an MCP server just to run bash commands
+const mcp = new MCPServer();
+mcp.addTool("run_shell_script", executeBash);
+    `,
+    correctPattern: `
+// Using the Claude Code built-in Bash capability
+// (No custom MCP required, Bash is native to the agent environment)
+    `,
+    flaw: "Building complex MCPs for features the host environment already has.",
+    explanation: "Task Statement 2.5: Select built-in tools. Do not reinvent the wheel. Claude Code natively ships with highly optimized Bash, Glob, Grep, and Edit tools. Use built-in tools over custom MCPs when interacting with the local workspace."
+  },
+  {
+    id: 43,
+    domain: 3,
+    taskStatement: "3.1",
+    title: "Conflicting Global Rules",
+    antiPattern: `
+# CLAUDE.md
+- Always use Python 2 syntax.
+- Always use Python 3 syntax.
+    `,
+    correctPattern: `
+# legacy_app/CLAUDE.md
+- Use Python 2.7.
+
+# modern_app/CLAUDE.md
+- Use Python 3.11.
+    `,
+    flaw: "Defining mutually exclusive conventions in the root project.",
+    explanation: "Task Statement 3.1: Configure CLAUDE.md files. Defining conflicting rules globally confuses the model. Modularize your conventions into sub-directories so the agent only loads the rules relevant to the code it is currently editing."
+  },
+  {
+    id: 44,
+    domain: 3,
+    taskStatement: "3.2",
+    title: "Hardcoding Secrets in Skills",
+    antiPattern: `
+"skills": {
+  "deploy": {
+    "instructions": "Run npm run deploy --token=ABCD1234XYZ"
+  }
+}
+    `,
+    correctPattern: `
+"skills": {
+  "deploy": {
+    "instructions": "Run npm run deploy. Ensure the $DEPLOY_TOKEN environment variable is set."
+  }
+}
+    `,
+    flaw: "Committing API keys and secrets directly into skill configuration.",
+    explanation: "Task Statement 3.2: Configure custom skills. Skills and slash commands are often committed to version control (.gemini/config). Never hardcode secrets in skill instructions; rely on environment variables."
+  },
+  {
+    id: 45,
+    domain: 3,
+    taskStatement: "3.3",
+    title: "Overloading Path Matchers",
+    antiPattern: `
+// Loading massive rule sets for every single file type
+if (path.includes(".")) {
+  loadConvention("massive-frontend-and-backend-rules.md");
+}
+    `,
+    correctPattern: `
+if (path.endsWith(".tsx")) {
+  loadConvention("react-rules.md");
+}
+    `,
+    flaw: "Using excessively broad globs to load conventions.",
+    explanation: "Task Statement 3.3: Apply path-specific rules. Broad globs (like matching every file) defeat the purpose of path-specific rules. Be precise with your globs so the agent's context window remains lean and focused."
+  }
+  ,
+  {
+    id: 46,
+    domain: 3,
+    taskStatement: "3.4",
+    title: "Skipping Plan Mode for Dependencies",
+    antiPattern: `
+// User asks to upgrade a major framework
+$ claude -c "Upgrade React from 17 to 18 and fix all the breaking changes."
+    `,
+    correctPattern: `
+// High-risk changes require plan mode
+$ claude -p "Upgrade React from 17 to 18. Audit breaking changes."
+    `,
+    flaw: "Using direct execution for high-risk, cascading dependency updates.",
+    explanation: "Task Statement 3.4: Plan mode vs direct execution. Major dependency upgrades often cause cascading breakages. Plan mode allows the user to review the upgrade path and necessary refactors before the codebase is destabilized."
+  },
+  {
+    id: 47,
+    domain: 3,
+    taskStatement: "3.5",
+    title: "Ignoring Compiler Feedback",
+    antiPattern: `
+// The agent writes code, gets a compiler error, and immediately stops
+const code = generate();
+const error = compile(code);
+if (error) return "I failed to write the code.";
+    `,
+    correctPattern: `
+// The agent feeds the error back into itself
+let code = generate();
+let error = compile(code);
+while (error && attempts < 3) {
+  code = generate(\`Fix this compilation error: \${error}\`);
+  error = compile(code);
+  attempts++;
+}
+    `,
+    flaw: "Failing to build iterative self-correction loops.",
+    explanation: "Task Statement 3.5: Iterative refinement. The core advantage of agentic coding is self-correction. Agents must be programmed to parse compiler/linter errors and iteratively refine their output."
+  },
+  {
+    id: 48,
+    domain: 3,
+    taskStatement: "3.6",
+    title: "CI/CD Sandbox Escape",
+    antiPattern: `
+// Giving the CI agent root access to the deployment environment
+agent.run("Review the PR", { environment: "production_root" });
+    `,
+    correctPattern: `
+// Running the CI agent in an isolated, read-only container
+agent.run("Review the PR", { environment: "ephemeral_docker_sandbox" });
+    `,
+    flaw: "Providing agents with excessive permissions in automated pipelines.",
+    explanation: "Task Statement 3.6: Integrate into CI/CD. Agents running in automated pipelines must operate in strictly isolated sandboxes to prevent generated code (or hallucinated bash commands) from modifying production infrastructure."
+  },
+  {
+    id: 49,
+    domain: 4,
+    taskStatement: "4.1",
+    title: "Vague Semantic Boundaries",
+    antiPattern: `
+"Identify all medical conditions in this text."
+    `,
+    correctPattern: `
+"Identify all medical conditions.
+CRITERIA:
+- Include diseases, syndromes, and chronic conditions (e.g., Asthma).
+- EXCLUDE symptoms (e.g., coughing).
+- EXCLUDE medical procedures (e.g., surgery)."
+    `,
+    flaw: "Failing to provide explicit exclusion criteria.",
+    explanation: "Task Statement 4.1: Explicit criteria. When extracting specific entities, defining what *not* to include (the negative boundaries) is often more important than defining what to include, significantly reducing false positives."
+  },
+  {
+    id: 50,
+    domain: 4,
+    taskStatement: "4.2",
+    title: "Misaligned Few-Shot Formatting",
+    antiPattern: `
+// Prompt asks for XML but examples use JSON
+"Format the output as XML. 
+Example: {'name': 'John'}"
+    `,
+    correctPattern: `
+"Format the output as XML.
+Example: <person><name>John</name></person>"
+    `,
+    flaw: "Providing few-shot examples that contradict the structural instructions.",
+    explanation: "Task Statement 4.2: Apply few-shot prompting. The model heavily biases toward the format of your few-shot examples. If the examples do not perfectly match your requested output schema, the model will output malformed data."
+  },
+  {
+    id: 51,
+    domain: 4,
+    taskStatement: "4.3",
+    title: "Loose JSON Schemas",
+    antiPattern: `
+"input_schema": {
+  "type": "object",
+  "properties": {
+    "tags": { "type": "array" }
+  }
+}
+    `,
+    correctPattern: `
+"input_schema": {
+  "type": "object",
+  "properties": {
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Exactly 3 descriptive tags."
+    }
+  },
+  "required": ["tags"]
+}
+    `,
+    flaw: "Using untyped arrays or missing 'required' fields in schemas.",
+    explanation: "Task Statement 4.3: Enforce structured output schemas. If you do not strongly type array items or explicitly mark fields as required, the LLM will often return arrays of mixed types or omit the field entirely."
+  },
+  {
+    id: 52,
+    domain: 4,
+    taskStatement: "4.4",
+    title: "Static Retry Prompts",
+    antiPattern: `
+if (!isValid(output)) {
+  // Retrying with the exact same prompt
+  output = await agent.run(originalPrompt);
+}
+    `,
+    correctPattern: `
+if (!isValid(output)) {
+  // Passing the exact validation error back to the agent
+  output = await agent.run(\`\${originalPrompt}. PREVIOUS ERROR TO FIX: \${validationError}\`);
+}
+    `,
+    flaw: "Retrying a failed generation without providing the error context.",
+    explanation: "Task Statement 4.4: Validation and feedback loops. If an LLM fails a validation schema, running the exact same prompt will likely yield the exact same error. You must feed the specific validation error back into the next turn."
+  },
+  {
+    id: 53,
+    domain: 4,
+    taskStatement: "4.5",
+    title: "Synchronous Rate Limit Thrashing",
+    antiPattern: `
+// Blasting the API concurrently until it 429s
+await Promise.all(1000_items.map(i => llm.generate(i)));
+    `,
+    correctPattern: `
+// Using standard Message Batching for large async jobs
+const batch = await anthropic.messages.batches.create({ ... });
+    `,
+    flaw: "Attempting to brute-force concurrency instead of using Batch APIs.",
+    explanation: "Task Statement 4.5: Efficient batch processing. Blasting the standard API concurrently will trigger 429 Rate Limit errors and cost more. Use the Anthropic Message Batch API for offline, high-volume processing."
+  },
+  {
+    id: 54,
+    domain: 4,
+    taskStatement: "4.6",
+    title: "Self-Evaluation Bias",
+    antiPattern: `
+// Asking the same agent to grade its own work
+const draft = await agent.write();
+const grade = await agent.evaluate(draft);
+    `,
+    correctPattern: `
+// Using a separate agent (often a different model) to evaluate
+const draft = await writerAgent.write();
+const grade = await criticAgent.evaluate(draft);
+    `,
+    flaw: "Allowing a model to evaluate its own direct output in the same context.",
+    explanation: "Task Statement 4.6: Multi-pass architectures. LLMs exhibit 'sycophancy' and self-affirmation bias. If you ask an agent if its own work is good, it will almost always say yes. Use a separate, isolated evaluator agent."
+  },
+  {
+    id: 55,
+    domain: 5,
+    taskStatement: "5.1",
+    title: "Middle-Heavy Context",
+    antiPattern: `
+// Dumping 100 pages of text in the exact middle of a prompt
+const prompt = \`Instructions... \${massiveDocument} ... Question?\`;
+    `,
+    correctPattern: `
+// Placing critical instructions at the very end
+const prompt = \`\${massiveDocument} ... Instructions: Do X, Y, Z. Question?\`;
+    `,
+    flaw: "Burying critical instructions in the middle of massive context windows.",
+    explanation: "Task Statement 5.1: Manage conversation context. Due to attention mechanisms, LLMs recall the very beginning and very end of a prompt best. Burying your actual instructions in the middle of 100k tokens leads to poor adherence."
+  },
+  {
+    id: 56,
+    domain: 5,
+    taskStatement: "5.2",
+    title: "Assuming Happy Paths",
+    antiPattern: `
+"Fetch the user's email from the DB and send a welcome message."
+// DB lookup fails, agent hallucinates an email to fulfill the 'send' instruction.
+    `,
+    correctPattern: `
+"Fetch the user's email. IF the email is missing, DO NOT send a message. Instead, use the 'flag_account' tool."
+    `,
+    flaw: "Failing to instruct the agent on what to do if a prerequisite fails.",
+    explanation: "Task Statement 5.2: Escalation and ambiguity. If you do not provide explicit instructions for failure states, the agent's strong desire to fulfill your final instruction will cause it to hallucinate missing prerequisites."
+  },
+  {
+    id: 57,
+    domain: 5,
+    taskStatement: "5.3",
+    title: "Swallowing Subagent Errors",
+    antiPattern: `
+try {
+  await subagent.execute();
+} catch (e) {
+  // Coordinator hides the error from the user and outputs a blank result
+  return ""; 
+}
+    `,
+    correctPattern: `
+try {
+  await subagent.execute();
+} catch (e) {
+  // Coordinator propagates a structured summary of the failure
+  return \`Subagent failed to process data: \${e.message}\`;
+}
+    `,
+    flaw: "Silently catching subagent errors without alerting the coordinator or user.",
+    explanation: "Task Statement 5.3: Error propagation. Silent failures corrupt the multi-agent workflow. The coordinator must be made aware of subagent failures so it can either retry, use a fallback, or escalate to the user."
+  },
+  {
+    id: 58,
+    domain: 5,
+    taskStatement: "5.4",
+    title: "Redundant Tree Traversal",
+    antiPattern: `
+// Agent repeatedly runs 'ls' on the root directory every turn
+await agent.run("ls /");
+await agent.run("ls /");
+    `,
+    correctPattern: `
+// Agent stores the directory structure in a persistent summary tool
+await agent.run("tree / > repo_structure.txt");
+    `,
+    flaw: "Wasting tokens on redundant exploratory commands.",
+    explanation: "Task Statement 5.4: Context in codebase exploration. Agents exploring large codebases often waste tokens running `ls` or `find` repeatedly. Teach them to generate and cache index files (like a `tree` dump) for reference."
+  },
+  {
+    id: 59,
+    domain: 5,
+    taskStatement: "5.5",
+    title: "Binary Confidence Scores",
+    antiPattern: `
+// Agent evaluates its own confidence
+"I am 100% confident this is correct."
+    `,
+    correctPattern: `
+// Agent utilizes a rigorous confidence calibration rubric
+"Confidence: 0.7. Deduction: I lack access to the Q3 financial data required for absolute certainty."
+    `,
+    flaw: "Allowing arbitrary confidence scoring without a rubric.",
+    explanation: "Task Statement 5.5: Confidence calibration. LLMs are naturally overconfident. To build reliable Human-in-the-Loop workflows, you must provide a strict rubric (e.g., 'Deduct 0.3 if you haven't seen raw source data') for calibration."
+  },
+  {
+    id: 60,
+    domain: 5,
+    taskStatement: "5.6",
+    title: "Stripping Metadata on Ingestion",
+    antiPattern: `
+// Ingesting 5 PDF files into a single text blob
+const combinedText = doc1.text + doc2.text + doc3.text;
+await agent.summarize(combinedText);
+    `,
+    correctPattern: `
+// Preserving source boundaries
+const combinedText = \`
+<source id="doc1">\${doc1.text}</source>
+<source id="doc2">\${doc2.text}</source>
+\`;
+await agent.summarize(combinedText);
+    `,
+    flaw: "Concatenating data sources without XML delimiters.",
+    explanation: "Task Statement 5.6: Preserve information provenance. If you strip metadata and boundaries when passing multi-source context to an agent, it becomes impossible for the agent to accurately cite which document a fact came from."
   }
 ];
 
@@ -582,5 +1162,4 @@ if (confidence < 0.9) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { PATTERNS_DATA };
 }
-
 
