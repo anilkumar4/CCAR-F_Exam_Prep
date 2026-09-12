@@ -62,6 +62,11 @@ const App = {
 
   navigate(module) {
     this.currentModule = module;
+    // Close mobile sidebar on navigation
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
     // Update nav
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const activeNav = document.querySelector(`.nav-item[data-module="${module}"]`);

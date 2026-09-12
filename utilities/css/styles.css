@@ -369,17 +369,20 @@ code, .code {
   display: none;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 14px 20px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 90;
+  z-index: 200;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 .mobile-logo {
   font-weight: 800;
+  font-size: 1rem;
   background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -393,35 +396,57 @@ code, .code {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 8px;
+  -webkit-tap-highlight-color: transparent;
 }
 .sidebar-overlay {
-  display: none;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0,0,0,0.6);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
-  z-index: 95;
+  z-index: 199;
   opacity: 0;
-  transition: opacity var(--transition-base);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 /* === Responsive === */
 @media (max-width: 768px) {
   .mobile-header { display: flex; }
-  .sidebar { transform: translateX(-100%); z-index: 100; }
-  .sidebar.open { transform: translateX(0); }
-  .sidebar-overlay.active { display: block; opacity: 1; }
-  
-  .main-content { 
-    margin-left: 0; 
-    padding: 80px 16px 20px 16px; /* account for mobile header */
+
+  .sidebar {
+    transform: translateX(-100%);
+    z-index: 210;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 72px 16px 24px 16px;
   }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-  
-  .page-title { font-size: 1.5rem; }
-  .stat-value { font-size: 1.8rem; }
+
+  .page-title { font-size: 1.4rem; }
+  .page-description { font-size: 0.85rem; }
+  .stat-value { font-size: 1.6rem; }
   .card { padding: 16px; }
+  .btn { padding: 10px 16px; font-size: 0.8rem; }
+  .btn-lg { padding: 12px 20px; font-size: 0.9rem; }
+
+  /* Better touch targets on mobile */
+  .nav-item { padding: 14px 16px; font-size: 0.9rem; }
 }
