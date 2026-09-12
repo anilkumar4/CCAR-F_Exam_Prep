@@ -9,9 +9,27 @@ const App = {
 
   init() {
     this.loadState();
+    this.applyTheme();
     this.setupNavigation();
     this.renderDashboard();
     this.navigate('dashboard');
+  },
+
+  toggleTheme() {
+    this.state.theme = this.state.theme === 'light' ? 'dark' : 'light';
+    this.saveState();
+    this.applyTheme();
+  },
+
+  applyTheme() {
+    const isLight = this.state.theme === 'light';
+    document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
+    const iconLight = document.getElementById('theme-icon-light');
+    const iconDark = document.getElementById('theme-icon-dark');
+    if (iconLight && iconDark) {
+      iconLight.style.display = isLight ? 'none' : 'block';
+      iconDark.style.display = isLight ? 'block' : 'none';
+    }
   },
 
   loadState() {
@@ -20,9 +38,11 @@ const App = {
       studiedTasks: {},
       flashcardsMastered: {},
       flashcardsReview: {},
+      flashcardsSR: {},
       quizHistory: [],
       mockExamHistory: [],
       courseProgress: {},
+      theme: 'dark',
       userName: null,
       studyTime: {},
       lastVisit: null
@@ -104,12 +124,66 @@ const App = {
       case 'flashcards': Flashcards.init(); break;
       case 'quiz': Quiz.renderSetup(); break;
       case 'scenarios': Scenarios.renderList(); break;
+      case 'patterns': Patterns.renderList(); break;
       case 'cheatsheets': Cheatsheets.render(); break;
       case 'mock-exam': MockExam.renderSetup(); break;
     }
     window.scrollTo(0, 0);
     // Re-render Lucide icons for dynamically injected content
     setTimeout(() => { if (window.lucide) window.lucide.createIcons(); }, 100);
+  },
+
+  showMistakesJournal() {
+    const mistakes = this.state.mistakes ? Object.values(this.state.mistakes).sort((a,b) => b.timestamp - a.timestamp) : [];
+    
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('mistakes-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'mistakes-modal';
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;justify-content:center;align-items:center;padding:20px;';
+      modal.onclick = (e) => { if(e.target === modal) modal.style.display = 'none'; };
+      document.body.appendChild(modal);
+    }
+    
+    let content = `
+      <div class="card" style="width:100%;max-width:800px;max-height:90vh;overflow-y:auto;background:var(--bg-secondary);position:relative;">
+        <button style="position:absolute;top:15px;right:15px;background:none;border:none;color:white;font-size:1.5rem;cursor:pointer;" onclick="document.getElementById('mistakes-modal').style.display='none'">✕</button>
+        <h2 style="margin-bottom:20px;display:flex;align-items:center;gap:10px;"><i data-lucide="book-x" style="color:var(--accent-red)"></i> Mistake Journal</h2>
+    `;
+    
+    if (mistakes.length === 0) {
+      content += `<div style="text-align:center;padding:40px;color:var(--text-secondary);">You have no recorded mistakes! Great job.</div>`;
+    } else {
+      mistakes.forEach(m => {
+        content += `
+          <div style="background:var(--bg-primary);padding:15px;border-radius:8px;margin-bottom:15px;border-left:4px solid var(--accent-red);">
+            <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px;">Domain ${m.domain} • ${new Date(m.timestamp).toLocaleDateString()}</div>
+            <div style="margin-bottom:12px;font-weight:500;">${m.question}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+              <div style="background:rgba(239,68,68,0.1);padding:10px;border-radius:6px;">
+                <div style="font-size:0.75rem;color:var(--accent-red);font-weight:bold;margin-bottom:4px;">YOUR ANSWER</div>
+                <div style="font-size:0.9rem;">${m.options && m.options.find(o=>o.id===m.userAnswer) ? m.options.find(o=>o.id===m.userAnswer).text : m.userAnswer}</div>
+              </div>
+              <div style="background:rgba(34,197,94,0.1);padding:10px;border-radius:6px;">
+                <div style="font-size:0.75rem;color:var(--accent-green);font-weight:bold;margin-bottom:4px;">CORRECT ANSWER</div>
+                <div style="font-size:0.9rem;">${m.options && m.options.find(o=>o.id===m.correctAnswer) ? m.options.find(o=>o.id===m.correctAnswer).text : m.correctAnswer}</div>
+              </div>
+            </div>
+            <div style="background:rgba(6,182,212,0.1);padding:10px;border-radius:6px;font-size:0.9rem;">
+              <div style="font-size:0.75rem;color:var(--accent-cyan);font-weight:bold;margin-bottom:4px;">EXPLANATION</div>
+              ${m.explanation}
+              <div style="margin-top:8px;font-weight:bold;color:var(--accent-yellow);">💡 ${m.keyTakeaway}</div>
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    content += `</div>`;
+    modal.innerHTML = content;
+    modal.style.display = 'flex';
+    if (window.lucide) window.lucide.createIcons();
   },
 
   renderDashboard() {
@@ -123,6 +197,12 @@ const App = {
     const totalFlashcards = FLASHCARDS_DATA.length;
     const masteredCount = Object.keys(this.state.flashcardsMastered).filter(k => this.state.flashcardsMastered[k]).length;
     const flashcardPct = totalFlashcards > 0 ? Math.round((masteredCount / totalFlashcards) * 100) : 0;
+    const now = Date.now();
+    const dueCardsCount = FLASHCARDS_DATA.filter(c => {
+      const sr = this.state.flashcardsSR && this.state.flashcardsSR[c.id];
+      if (!sr) return true;
+      return sr.nextReview <= now;
+    }).length;
 
     const quizzes = this.state.quizHistory || [];
     const avgScore = quizzes.length > 0 ? Math.round(quizzes.reduce((s,q) => s + q.score, 0) / quizzes.length) : 0;
@@ -141,6 +221,19 @@ const App = {
     readiness = Math.round(readiness);
 
     readiness = Math.round(readiness);
+
+    // Calculate weak domains based on quiz history
+    let domainAccuracies = [];
+    if (quizzes.length > 0) {
+      STUDY_CONTENT.domains.forEach(d => {
+        const dQuizzes = quizzes.flatMap(q => q.domainScores && typeof q.domainScores[d.number] !== 'undefined' ? [q.domainScores[d.number]] : []);
+        if (dQuizzes.length > 0) {
+          const avg = Math.round(dQuizzes.reduce((a,b)=>a+b,0)/dQuizzes.length);
+          domainAccuracies.push({ domain: d, score: avg });
+        }
+      });
+      domainAccuracies.sort((a,b) => a.score - b.score);
+    }
 
     container.innerHTML = `
       ${!this.state.userName ? `
@@ -171,9 +264,9 @@ const App = {
               <div class="stat-value" style="color:var(--accent-purple)">${studiedCount}/${totalTasks}</div>
               <div class="stat-label">Topics Studied</div>
             </div>
-            <div class="stat-card card">
-              <div class="stat-value" style="color:var(--accent-cyan)">${masteredCount}/${totalFlashcards}</div>
-              <div class="stat-label">Cards Mastered</div>
+            <div class="stat-card card" onclick="App.navigate('flashcards')" style="cursor:pointer" title="${masteredCount} total cards mastered">
+              <div class="stat-value" style="color:var(--accent-cyan)">${dueCardsCount}</div>
+              <div class="stat-label">Cards Due Review</div>
             </div>
             <div class="stat-card card">
               <div class="stat-value" style="color:var(--accent-yellow)">${avgScore}%</div>
@@ -186,6 +279,28 @@ const App = {
           </div>
         </div>
       </div>
+
+      ${domainAccuracies.length > 0 ? `
+        <h3 style="font-weight:700;margin-bottom:16px;">Targeted Recommendations</h3>
+        <div class="card mb-4" style="border-left: 4px solid var(--accent-red)">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <div style="background: rgba(239, 68, 68, 0.15); padding:8px; border-radius:8px; color:var(--accent-red);">
+              <i data-lucide="target"></i>
+            </div>
+            <div>
+              <h4 style="font-weight:700; margin:0;">Weak Spot Detected: ${domainAccuracies[0].domain.title}</h4>
+              <p style="color:var(--text-secondary); font-size:0.85rem; margin:0;">Average Score: <strong style="color:var(--accent-red)">${domainAccuracies[0].score}%</strong> (Target: 72%)</p>
+            </div>
+          </div>
+          <p style="font-size:0.9rem; margin-bottom:16px;">
+            This domain accounts for <strong>${domainAccuracies[0].domain.weight}%</strong> of the exam. Improving here will significantly boost your overall readiness score.
+          </p>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary btn-sm" onclick="App.navigate('study'); setTimeout(()=>document.getElementById('domain-${domainAccuracies[0].domain.number}').scrollIntoView({behavior:'smooth'}), 100);">Review Study Guide</button>
+            <button class="btn btn-secondary btn-sm" onclick="App.navigate('flashcards'); Flashcards.filterDomain=${domainAccuracies[0].domain.number}; Flashcards.init();">Drill Flashcards</button>
+          </div>
+        </div>
+      ` : ''}
 
       <h3 style="font-weight:700;margin-bottom:16px;">Domain Progress</h3>
       <div class="card mb-4">
@@ -216,7 +331,7 @@ const App = {
       </div>
 
       <h3 style="font-weight:700;margin-bottom:16px;">Quick Start</h3>
-      <div class="grid grid-3">
+      <div class="grid grid-4">
         <div class="card" style="cursor:pointer" onclick="App.navigate('study')">
           <div style="font-size:2rem;margin-bottom:8px">📖</div>
           <div style="font-weight:700;margin-bottom:4px">Study Guide</div>
@@ -225,12 +340,70 @@ const App = {
         <div class="card" style="cursor:pointer" onclick="App.navigate('quiz')">
           <div style="font-size:2rem;margin-bottom:8px"><i data-lucide="check-circle" style="width:24px;height:24px;margin-right:8px;vertical-align:middle;color:var(--accent-cyan)"></i></div>
           <div style="font-weight:700;margin-bottom:4px">Practice Quiz</div>
-          <div style="font-size:0.85rem;color:var(--text-secondary)">Test your knowledge with 65 exam-style questions</div>
+          <div style="font-size:0.85rem;color:var(--text-secondary)">Test your knowledge with ${typeof PRACTICE_QUESTIONS !== 'undefined' ? PRACTICE_QUESTIONS.length : 65} exam-style questions</div>
         </div>
         <div class="card" style="cursor:pointer" onclick="App.navigate('mock-exam')">
           <div style="font-size:2rem;margin-bottom:8px">🏆</div>
           <div style="font-weight:700;margin-bottom:4px">Mock Exam</div>
           <div style="font-size:0.85rem;color:var(--text-secondary)">Simulate the real exam: 60 questions, 120 min, 720 pass</div>
+        </div>
+        <div class="card" style="cursor:pointer; position:relative;" onclick="App.showMistakesJournal()">
+          ${App.state.mistakes && Object.keys(App.state.mistakes).length > 0 ? `<div style="position:absolute;top:15px;right:15px;background:var(--accent-red);color:white;border-radius:12px;padding:2px 8px;font-size:0.75rem;font-weight:bold;">${Object.keys(App.state.mistakes).length}</div>` : ''}
+          <div style="font-size:2rem;margin-bottom:8px">📓</div>
+          <div style="font-weight:700;margin-bottom:4px">Mistake Journal</div>
+          <div style="font-size:0.85rem;color:var(--text-secondary)">Review questions you got wrong to improve retention</div>
+        </div>
+      </div>
+      
+      <h3 style="font-weight:700;margin-top:32px;margin-bottom:16px;">Pre-Exam Readiness Checklist</h3>
+      <div class="card mb-4" style="border-left: 4px solid var(--accent-green)">
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:16px;">
+          To statistically guarantee passing the CCAR-F exam, complete these 4 milestones before booking your test.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-primary);border-radius:8px;border:1px solid ${studiedCount >= totalTasks && totalTasks > 0 ? 'var(--accent-green)' : 'var(--border-color)'};">
+            <div style="color:${studiedCount >= totalTasks && totalTasks > 0 ? 'var(--accent-green)' : 'var(--text-muted)'}">
+              <i data-lucide="${studiedCount >= totalTasks && totalTasks > 0 ? 'check-circle-2' : 'circle'}"></i>
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:600;">Complete Interactive Course</div>
+              <div style="font-size:0.8rem;color:var(--text-muted)">Finish all ${totalTasks} interactive lessons across the 5 domains.</div>
+            </div>
+            <div style="font-weight:bold;color:${studiedCount >= totalTasks && totalTasks > 0 ? 'var(--accent-green)' : 'var(--text-primary)'}">${studiedCount}/${totalTasks}</div>
+          </div>
+          
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-primary);border-radius:8px;border:1px solid ${flashcardPct >= 80 ? 'var(--accent-green)' : 'var(--border-color)'};">
+            <div style="color:${flashcardPct >= 80 ? 'var(--accent-green)' : 'var(--text-muted)'}">
+              <i data-lucide="${flashcardPct >= 80 ? 'check-circle-2' : 'circle'}"></i>
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:600;">Flashcard Mastery (80%+)</div>
+              <div style="font-size:0.8rem;color:var(--text-muted)">Achieve 80% mastery across all Spaced Repetition flashcards.</div>
+            </div>
+            <div style="font-weight:bold;color:${flashcardPct >= 80 ? 'var(--accent-green)' : 'var(--text-primary)'}">${flashcardPct}%</div>
+          </div>
+          
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-primary);border-radius:8px;border:1px solid ${mockExams.filter(m => m.passed).length >= 2 ? 'var(--accent-green)' : 'var(--border-color)'};">
+            <div style="color:${mockExams.filter(m => m.passed).length >= 2 ? 'var(--accent-green)' : 'var(--text-muted)'}">
+              <i data-lucide="${mockExams.filter(m => m.passed).length >= 2 ? 'check-circle-2' : 'circle'}"></i>
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:600;">Pass 2 Mock Exams</div>
+              <div style="font-size:0.8rem;color:var(--text-muted)">Score 720+ on at least 2 full-length Mock Exams.</div>
+            </div>
+            <div style="font-weight:bold;color:${mockExams.filter(m => m.passed).length >= 2 ? 'var(--accent-green)' : 'var(--text-primary)'}">${mockExams.filter(m => m.passed).length}/2</div>
+          </div>
+          
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-primary);border-radius:8px;border:1px solid ${domainAccuracies.length === STUDY_CONTENT.domains.length && domainAccuracies.every(d => d.score >= 60) ? 'var(--accent-green)' : 'var(--border-color)'};">
+            <div style="color:${domainAccuracies.length === STUDY_CONTENT.domains.length && domainAccuracies.every(d => d.score >= 60) ? 'var(--accent-green)' : 'var(--text-muted)'}">
+              <i data-lucide="${domainAccuracies.length === STUDY_CONTENT.domains.length && domainAccuracies.every(d => d.score >= 60) ? 'check-circle-2' : 'circle'}"></i>
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:600;">Eliminate Weak Domains</div>
+              <div style="font-size:0.8rem;color:var(--text-muted)">Ensure average quiz accuracy in EVERY domain is &ge; 60%.</div>
+            </div>
+            <div style="font-weight:bold;color:${domainAccuracies.length === STUDY_CONTENT.domains.length && domainAccuracies.every(d => d.score >= 60) ? 'var(--accent-green)' : 'var(--text-primary)'}">${domainAccuracies.filter(d => d.score >= 60).length}/5</div>
+          </div>
         </div>
       </div>
       
@@ -616,15 +789,38 @@ const Flashcards = {
   },
 
   getFilteredCards() {
+    const now = Date.now();
     let cards = [...FLASHCARDS_DATA];
     if (this.filterDomain > 0) cards = cards.filter(c => c.domain === this.filterDomain);
+    
+    // Filter out cards that are not due yet
+    cards = cards.filter(c => {
+      const sr = App.state.flashcardsSR && App.state.flashcardsSR[c.id];
+      if (!sr) return true; // new card
+      return sr.nextReview <= now; // due for review
+    });
     return cards;
   },
 
   shuffleCards() {
+    // Sort by nextReview (ascending) so the most overdue cards are first
+    this.cards.sort((a, b) => {
+      const srA = (App.state.flashcardsSR && App.state.flashcardsSR[a.id]) || { nextReview: 0 };
+      const srB = (App.state.flashcardsSR && App.state.flashcardsSR[b.id]) || { nextReview: 0 };
+      return srA.nextReview - srB.nextReview;
+    });
+    
+    // Shuffle cards that have the same due time (e.g. new cards = 0)
     for (let i = this.cards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+      const srI = (App.state.flashcardsSR && App.state.flashcardsSR[this.cards[i].id]) || { nextReview: 0 };
+      const srI_prev = (i > 0 && App.state.flashcardsSR && App.state.flashcardsSR[this.cards[i-1].id]) || { nextReview: 0 };
+      if (srI.nextReview === srI_prev.nextReview) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const srJ = (App.state.flashcardsSR && App.state.flashcardsSR[this.cards[j].id]) || { nextReview: 0 };
+          if (srI.nextReview === srJ.nextReview) {
+              [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+          }
+      }
     }
   },
 
@@ -646,7 +842,7 @@ const Flashcards = {
         <div style="margin-left:auto;font-size:0.85rem;color:var(--text-muted)">${masteredCount}/${FLASHCARDS_DATA.length} mastered</div>
       </div>
 
-      ${this.cards.length === 0 ? '<div class="card text-center" style="padding:60px"><div style="font-size:3rem;margin-bottom:16px">🎉</div><h3>All cards mastered in this set!</h3></div>' : `
+      ${this.cards.length === 0 ? '<div class="card text-center" style="padding:60px"><div style="font-size:3rem;margin-bottom:16px">🎉</div><h3>You are all caught up!</h3><p style="color:var(--text-secondary);margin-top:10px;">No cards due for review right now. Come back later.</p></div>' : `
         <div class="flashcard-container">
           <div class="flashcard ${this.isFlipped ? 'flipped' : ''}" onclick="Flashcards.flip()">
             <div class="flashcard-face flashcard-front">
@@ -687,18 +883,33 @@ const Flashcards = {
     const card = this.cards[this.currentIndex];
     if (!card) return;
     this.sessionStats.reviewed++;
+    
+    const now = Date.now();
+    if (!App.state.flashcardsSR) App.state.flashcardsSR = {};
+    let sr = App.state.flashcardsSR[card.id] || { step: 0, nextReview: 0 };
+    
     if (rating === 'gotIt') {
       this.sessionStats.gotIt++;
-      App.state.flashcardsMastered[card.id] = true;
+      // Intervals: 0, 3 days, 7 days, 30 days
+      const intervals = [0, 1000*60*60*24*3, 1000*60*60*24*7, 1000*60*60*24*30];
+      sr.step = Math.min(sr.step + 1, intervals.length - 1);
+      sr.nextReview = now + intervals[sr.step];
+      App.state.flashcardsMastered[card.id] = (sr.step === intervals.length - 1);
       delete App.state.flashcardsReview[card.id];
     } else {
       this.sessionStats.needReview++;
+      // Penalty: Next review in 1 minute
+      sr.step = 0;
+      sr.nextReview = now + 1000 * 60;
       App.state.flashcardsReview[card.id] = true;
       delete App.state.flashcardsMastered[card.id];
     }
+    
+    App.state.flashcardsSR[card.id] = sr;
     App.saveState();
+    
     this.isFlipped = false;
-    this.currentIndex++;
+    this.cards.splice(this.currentIndex, 1);
     if (this.currentIndex >= this.cards.length) this.currentIndex = 0;
     this.render();
   }
@@ -746,6 +957,7 @@ const Quiz = {
             <select class="quiz-select" id="quiz-mode">
               <option value="practice">Practice (Untimed, Show Answers)</option>
               <option value="timed">Timed (2 min/question)</option>
+              <option value="drill">Quick Drill (10 questions, 12 mins)</option>
             </select>
           </div>
           <div style="text-align:center;margin-top:24px">
@@ -768,13 +980,21 @@ const Quiz = {
       const j = Math.floor(Math.random() * (i + 1));
       [qs[i], qs[j]] = [qs[j], qs[i]];
     }
-    this.questions = this.questionCount > 0 ? qs.slice(0, this.questionCount) : qs;
+    if (this.mode === 'drill') {
+      this.questionCount = 10;
+      this.questions = qs.slice(0, 10);
+    } else {
+      this.questions = this.questionCount > 0 ? qs.slice(0, this.questionCount) : qs;
+    }
     this.currentIndex = 0;
     this.answers = {};
     this.isReview = false;
 
     if (this.mode === 'timed') {
       this.timeRemaining = this.questions.length * 120;
+      this.startTimer();
+    } else if (this.mode === 'drill') {
+      this.timeRemaining = 12 * 60; // 12 minutes
       this.startTimer();
     }
     this.renderQuestion();
@@ -888,6 +1108,27 @@ const Quiz = {
     const score = Math.round((correct / this.questions.length) * 100);
     const scaled = Math.round(100 + (score / 100) * 900);
     const passed = scaled >= 720;
+
+    // Mistake Journal Logic
+    if (!App.state.mistakes) App.state.mistakes = {};
+    this.questions.forEach(q => {
+      const userAnswer = this.answers[q.id];
+      if (userAnswer && userAnswer !== q.correctAnswer) {
+        App.state.mistakes[q.id] = {
+          qId: q.id,
+          question: q.question,
+          domain: q.domain,
+          userAnswer: userAnswer,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+          keyTakeaway: q.keyTakeaway,
+          options: q.options,
+          timestamp: Date.now()
+        };
+      } else if (userAnswer === q.correctAnswer && App.state.mistakes[q.id]) {
+        delete App.state.mistakes[q.id];
+      }
+    });
 
     // Save history
     const domScoresPct = {};
@@ -1053,6 +1294,65 @@ const Scenarios = {
   reveal(scenarioId, dpIndex) {
     const el = document.getElementById(`dp-choices-${scenarioId}-${dpIndex}`);
     if (el) el.classList.add('revealed');
+  }
+};
+
+// ============================================================
+// Patterns Module
+// ============================================================
+const Patterns = {
+  renderList() {
+    const container = document.getElementById('patterns-content');
+    if (!container) return;
+    container.innerHTML = `
+      <div class="grid grid-2">
+        ${typeof PATTERNS_DATA !== 'undefined' ? PATTERNS_DATA.map(p => {
+          const domain = STUDY_CONTENT.domains.find(d => d.number === p.domain);
+          return `
+            <div class="card" style="border-left: 4px solid var(--accent-red)">
+              <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px">Domain ${p.domain}: ${domain ? domain.title : ''}</div>
+              <div style="font-weight:700;margin-bottom:16px;font-size:1.1rem">${p.title}</div>
+              <div style="background:var(--bg-secondary);padding:12px;border-radius:6px;font-family:monospace;font-size:0.85rem;margin-bottom:16px;white-space:pre-wrap;overflow-x:auto;">${p.antiPattern}</div>
+              <button class="btn btn-secondary btn-sm" onclick="Patterns.renderDetail(${p.id})">Analyze Pattern</button>
+            </div>
+          `;
+        }).join('') : '<p>Loading patterns...</p>'}
+      </div>
+    `;
+  },
+
+  renderDetail(patternId) {
+    const container = document.getElementById('patterns-content');
+    const p = PATTERNS_DATA.find(x => x.id === patternId);
+    if (!p || !container) return;
+
+    container.innerHTML = `
+      <div>
+        <button class="btn btn-secondary btn-sm mb-3" onclick="Patterns.renderList()">← Back to Patterns</button>
+        <div class="card" style="margin-bottom:24px">
+          <h2 style="font-weight:800;margin-bottom:8px">${p.title}</h2>
+          <div style="margin-bottom:24px">
+            <span class="badge" style="background:var(--accent-red)">Anti-Pattern</span>
+            <div style="background:rgba(239,68,68,0.1);padding:16px;border-radius:6px;font-family:monospace;font-size:0.9rem;margin-top:12px;border:1px solid rgba(239,68,68,0.3);white-space:pre-wrap;overflow-x:auto;">${p.antiPattern}</div>
+          </div>
+          
+          <button id="reveal-btn-${p.id}" class="btn btn-primary" onclick="document.getElementById('reveal-btn-${p.id}').style.display='none'; document.getElementById('pattern-solution-${p.id}').style.display='block';">Identify the Flaw</button>
+          
+          <div id="pattern-solution-${p.id}" style="display:none;margin-top:24px;border-top:1px solid var(--border-color);padding-top:24px;">
+            <h3 style="color:var(--accent-red);font-weight:700;margin-bottom:8px">The Flaw</h3>
+            <p style="margin-bottom:24px">${p.flaw}</p>
+            
+            <h3 style="color:var(--accent-green);font-weight:700;margin-bottom:8px">The Correct Approach</h3>
+            <div style="background:rgba(34,197,94,0.1);padding:16px;border-radius:6px;font-family:monospace;font-size:0.9rem;margin-bottom:16px;border:1px solid rgba(34,197,94,0.3);white-space:pre-wrap;overflow-x:auto;">${p.correctPattern}</div>
+            
+            <div style="background:rgba(6,182,212,0.1);padding:16px;border-radius:6px;">
+              <h4 style="color:var(--accent-cyan);font-weight:700;margin-bottom:8px">Why this works</h4>
+              <p style="font-size:0.9rem;margin:0">${p.explanation}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 };
 

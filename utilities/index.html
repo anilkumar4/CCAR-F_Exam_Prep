@@ -77,6 +77,11 @@
           <span>Scenario Deep Dives</span>
           <span class="nav-badge">6</span>
         </div>
+        <div class="nav-item" data-module="patterns">
+          <i data-lucide="code-2" class="nav-icon"></i>
+          <span>Code Pattern Drills</span>
+          <span class="nav-badge" style="background:var(--accent-red)">10</span>
+        </div>
         <div class="nav-item" data-module="cheatsheets">
           <i data-lucide="file-text" class="nav-icon"></i>
           <span>Cheat Sheets</span>
@@ -88,6 +93,13 @@
         </div>
       </nav>
       <div class="sidebar-footer">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <span style="font-size:0.8rem; font-weight:600; color:var(--text-primary)">Theme</span>
+          <button class="btn btn-secondary btn-sm" onclick="App.toggleTheme()" id="theme-toggle-btn" style="padding:4px 8px;">
+            <i data-lucide="sun" id="theme-icon-light" style="display:none; width:16px; height:16px;"></i>
+            <i data-lucide="moon" id="theme-icon-dark" style="width:16px; height:16px;"></i>
+          </button>
+        </div>
         CCAR-F · Exam Code: CCAR-F<br>
         Version 1.0 · July 2026
       </div>
@@ -153,6 +165,15 @@
         <div id="scenarios-content"></div>
       </div>
 
+      <!-- Patterns Module -->
+      <div class="module" id="module-patterns">
+        <div class="page-header">
+          <h1 class="page-title"><span class="page-title-gradient">Code Pattern Drills</span></h1>
+          <p class="page-description">Spot the anti-pattern! Analyze the wrong approach, identify the flaw, and learn the correct architecture pattern required for the CCAR-F exam.</p>
+        </div>
+        <div id="patterns-content"></div>
+      </div>
+
       <!-- Cheatsheets Module -->
       <div class="module" id="module-cheatsheets">
         <div class="page-header">
@@ -180,6 +201,7 @@
   <script src="data/flashcards.js?v=2"></script>
   <script src="data/questions.js?v=2"></script>
   <script src="data/scenarios.js?v=2"></script>
+  <script src="data/patterns.js?v=2"></script>
   <script src="data/cheatsheets.js?v=2"></script>
 
   <!-- Application -->
