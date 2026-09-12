@@ -416,5 +416,238 @@ $ claude -c "fix the bug in login.js"
     `,
     flaw: "Running the agent globally without scoping.",
     explanation: "Claude Code searches and analyzes files relative to where it is executed. Running it at the root of a massive monorepo causes it to waste time scanning irrelevant projects. Always scope the agent to the tightest relevant directory."
+  },
+  {
+    id: 21,
+    domain: 2,
+    title: "Tool Schema Without Descriptions",
+    antiPattern: `
+{
+  "name": "calculate_shipping",
+  "description": "Calculates shipping cost.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "weight": { "type": "number" },
+      "zip_code": { "type": "string" },
+      "expedited": { "type": "boolean" }
+    }
+  }
+}
+    `,
+    correctPattern: `
+{
+  "name": "calculate_shipping",
+  "description": "Calculates shipping cost.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "weight": { "type": "number", "description": "Weight of the package in kilograms." },
+      "zip_code": { "type": "string", "description": "5-digit US postal code." },
+      "shipping_speed": { "type": "string", "enum": ["standard", "expedited"], "description": "Desired shipping speed." }
+    }
+  }
+}
+    `,
+    flaw: "Omitting property-level descriptions.",
+    explanation: "Just as the main tool description is critical for routing, property-level descriptions are critical for accurate argument generation. Without knowing that 'weight' is in kilograms or 'zip_code' must be a US 5-digit code, the LLM will hallucinate units and formats."
+  },
+  {
+    id: 22,
+    domain: 5,
+    title: "Silent Tool Failures",
+    antiPattern: `
+// In the backend:
+function executeTool(args) {
+  try {
+    const result = db.query(args);
+    return result;
+  } catch(e) {
+    // Return empty array on failure
+    return []; 
+  }
+}
+    `,
+    correctPattern: `
+// In the backend:
+function executeTool(args) {
+  try {
+    const result = db.query(args);
+    return result;
+  } catch(e) {
+    // Return explicit error message to the LLM
+    return \`Database error: \${e.message}\`; 
+  }
+}
+    `,
+    flaw: "Masking tool errors by returning empty results.",
+    explanation: "If a tool fails silently and returns an empty result (like `[]` or `null`), the LLM assumes the search was successful but found nothing. The LLM will then confidently tell the user 'No records exist', which is a hallucinated negative. Always return explicit error strings."
+  },
+  {
+    id: 23,
+    domain: 4,
+    title: "Inconsistent Few-Shot Examples",
+    antiPattern: `
+"Classify the sentiment.
+Examples:
+Review: I loved it! -> Positive
+Review: Terrible experience. -> Sentiment: Negative
+Review: It was okay. -> Output: Neutral"
+    `,
+    correctPattern: `
+"Classify the sentiment.
+Examples:
+Review: I loved it!
+Sentiment: Positive
+
+Review: Terrible experience.
+Sentiment: Negative
+
+Review: It was okay.
+Sentiment: Neutral"
+    `,
+    flaw: "Providing few-shot examples that do not share a strict format.",
+    explanation: "The purpose of few-shot prompting is to establish a pattern for the LLM to follow. If the examples themselves are inconsistently formatted, you teach the LLM that formatting doesn't matter, leading to unpredictable parsing downstream."
+  },
+  {
+    id: 24,
+    domain: 1,
+    title: "Rigid Linear Orchestration",
+    antiPattern: `
+// Hardcoded pipeline
+const translation = await translateAgent(input);
+const summary = await summarizeAgent(translation);
+const sentiment = await sentimentAgent(summary);
+return sentiment;
+    `,
+    correctPattern: `
+// Dynamic graph routing
+const intent = await routerAgent(input);
+if (intent === 'translate_and_summarize') {
+  // execute specific graph path
+} else if (intent === 'sentiment_only') {
+  // execute specific graph path
+}
+    `,
+    flaw: "Forcing all queries through a static, multi-step pipeline.",
+    explanation: "Running every user request through a heavy, linear chain of LLM calls creates massive latency, cost, and compounding error rates. Architecture should be dynamic—routing requests only to the necessary agents."
+  },
+  {
+    id: 25,
+    domain: 5,
+    title: "Injecting Unstructured Data into Context",
+    antiPattern: `
+const prompt = \`
+Here are the search results:
+result 1 was about cats it was written by bob on tuesday
+result 2 dogs are cool written by alice
+
+Answer the user's question.
+\`;
+    `,
+    correctPattern: `
+const prompt = \`
+Here are the search results:
+<results>
+  <result id="1" author="bob" date="tuesday">Cats</result>
+  <result id="2" author="alice">Dogs are cool</result>
+</results>
+
+Answer the user's question.
+\`;
+    `,
+    flaw: "Concatenating data without structural delimiters.",
+    explanation: "LLMs need help distinguishing between instructions, user queries, and injected data. Using XML tags or Markdown headers to create a clear structural hierarchy significantly improves the LLM's ability to parse and reason over the context."
+  },
+  {
+    id: 26,
+    domain: 3,
+    title: "Asking Claude Code to 'Remember'",
+    antiPattern: `
+$ claude -c "Hey, remember that we use the 'postgres' user for the database for all future commands."
+    `,
+    correctPattern: `
+$ claude -c "Add a note to CLAUDE.md that the database user is always 'postgres'."
+    `,
+    flaw: "Treating Claude Code's session memory as permanent.",
+    explanation: "Claude Code's memory is bounded by the current conversation's context window. If you want it to 'remember' a project-wide rule for all future sessions, you must instruct it to write that rule into the CLAUDE.md file."
+  },
+  {
+    id: 27,
+    domain: 2,
+    title: "Giant Monolithic Tools",
+    antiPattern: `
+{
+  "name": "manage_server",
+  "description": "Use this tool to start, stop, restart, provision, or delete a server, and to update its configuration.",
+  "input_schema": { ... complex 50-field schema ... }
+}
+    `,
+    correctPattern: `
+{ "name": "start_server", ... },
+{ "name": "stop_server", ... },
+{ "name": "update_server_config", ... }
+    `,
+    flaw: "Bundling multiple distinct actions into one mega-tool.",
+    explanation: "Mega-tools have overly complex input schemas that confuse the LLM, leading to validation errors and hallucinated arguments. Break complex tools down into smaller, single-responsibility tools (CRUD operations)."
+  },
+  {
+    id: 28,
+    domain: 4,
+    title: "Leading the Witness",
+    antiPattern: `
+"Analyze this performance review. The employee clearly struggled with communication and missed deadlines, right? Summarize their weaknesses."
+    `,
+    correctPattern: `
+"Analyze this performance review. Provide an objective summary of the employee's strengths and weaknesses based strictly on the text."
+    `,
+    flaw: "Baking assumptions or biases into the prompt.",
+    explanation: "LLMs are highly sycophantic (they want to agree with the user). If you state an assumption in the prompt, the model will often hallucinate evidence to support your assumption rather than objectively analyzing the data."
+  },
+  {
+    id: 29,
+    domain: 1,
+    title: "Unsafe Tool Confirmation",
+    antiPattern: `
+// LLM decides to delete a database
+const toolCall = llmResponse.tool_calls[0];
+if (toolCall.name === 'drop_table') {
+  await executeQuery(\`DROP TABLE \${toolCall.args.table_name}\`);
+}
+    `,
+    correctPattern: `
+// LLM decides to delete a database
+const toolCall = llmResponse.tool_calls[0];
+if (toolCall.name === 'drop_table') {
+  // Pause execution and require Human-in-the-Loop (HITL) approval
+  const approved = await promptUserForApproval(toolCall.args.table_name);
+  if (approved) {
+    await executeQuery(\`DROP TABLE \${toolCall.args.table_name}\`);
+  }
+}
+    `,
+    flaw: "Allowing an autonomous agent to execute destructive actions without human oversight.",
+    explanation: "Any tool that causes irreversible, destructive, or high-financial-impact changes must be placed behind a Human-in-the-Loop (HITL) approval gate in the orchestration layer."
+  },
+  {
+    id: 30,
+    domain: 5,
+    title: "Truncating History from the Bottom",
+    antiPattern: `
+// Context window is getting full
+if (messages.length > 50) {
+  // Remove the most recent 10 messages to save space
+  messages = messages.slice(0, 40);
+}
+    `,
+    correctPattern: `
+// Context window is getting full
+if (messages.length > 50) {
+  // Keep the system prompt (index 0), and the most recent 39 messages
+  messages = [messages[0], ...messages.slice(-39)];
+}
+    `,
+    flaw: "Deleting the most recent conversational context.",
+    explanation: "When pruning message history, the most recent messages contain the current state and intent of the user. You should prune the *oldest* messages (while preserving the original system prompt) so the agent doesn't lose track of the immediate conversation."
   }
 ];
