@@ -1310,7 +1310,7 @@ const Patterns = {
           const domain = STUDY_CONTENT.domains.find(d => d.number === p.domain);
           return `
             <div class="card" style="border-left: 4px solid var(--accent-red)">
-              <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px">Domain ${p.domain}: ${domain ? domain.title : ''}</div>
+              <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px">Domain ${p.domain} • Task Statement ${p.taskStatement}</div>
               <div style="font-weight:700;margin-bottom:16px;font-size:1.1rem">${p.title}</div>
               <div style="background:var(--bg-secondary);padding:12px;border-radius:6px;font-family:monospace;font-size:0.85rem;margin-bottom:16px;white-space:pre-wrap;overflow-x:auto;">${p.antiPattern}</div>
               <button class="btn btn-secondary btn-sm" onclick="Patterns.renderDetail(${p.id})">Analyze Pattern</button>
