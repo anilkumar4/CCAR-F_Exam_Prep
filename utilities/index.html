@@ -14,11 +14,32 @@
     <!-- ===== Mobile Header ===== -->
     <header class="mobile-header">
       <div class="mobile-logo">CCAR-F Prep</div>
-      <button class="mobile-menu-btn" id="mobile-menu-btn">
-        <i data-lucide="menu"></i>
-      </button>
     </header>
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- ===== Mobile Bottom Tab Bar ===== -->
+    <nav class="mobile-tab-bar" id="mobile-tab-bar">
+      <button class="tab-item active" data-module="dashboard">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Home</span>
+      </button>
+      <button class="tab-item" data-module="course">
+        <i data-lucide="terminal-square"></i>
+        <span>Course</span>
+      </button>
+      <button class="tab-item" data-module="flashcards">
+        <i data-lucide="layers"></i>
+        <span>Cards</span>
+      </button>
+      <button class="tab-item" data-module="quiz">
+        <i data-lucide="check-circle"></i>
+        <span>Quiz</span>
+      </button>
+      <button class="tab-item" data-module="more" id="mobile-more-btn">
+        <i data-lucide="menu"></i>
+        <span>More</span>
+      </button>
+    </nav>
 
     <!-- ===== Sidebar Navigation ===== -->
     <aside class="sidebar">

@@ -368,7 +368,7 @@ code, .code {
 .mobile-header {
   display: none;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 14px 20px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
@@ -388,17 +388,54 @@ code, .code {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-.mobile-menu-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-primary);
-  cursor: pointer;
-  display: flex;
+
+/* Bottom Tab Bar — native app style */
+.mobile-tab-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  padding: 6px 0;
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+  justify-content: space-around;
   align-items: center;
-  justify-content: center;
-  padding: 8px;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: color 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
+.tab-item svg,
+.tab-item i {
+  width: 22px;
+  height: 22px;
+}
+.tab-item.active {
+  color: var(--accent-purple);
+}
+.tab-item:active {
+  transform: scale(0.92);
+}
+
+/* Sidebar Overlay */
 .sidebar-overlay {
   position: fixed;
   top: 0;
@@ -423,6 +460,7 @@ code, .code {
 /* === Responsive === */
 @media (max-width: 768px) {
   .mobile-header { display: flex; }
+  .mobile-tab-bar { display: flex; }
 
   .sidebar {
     transform: translateX(-100%);
@@ -436,7 +474,7 @@ code, .code {
 
   .main-content {
     margin-left: 0;
-    padding: 72px 16px 24px 16px;
+    padding: 64px 16px 80px 16px; /* top for header, bottom for tab bar */
   }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
 
@@ -450,3 +488,4 @@ code, .code {
   /* Better touch targets on mobile */
   .nav-item { padding: 14px 16px; font-size: 0.9rem; }
 }
+

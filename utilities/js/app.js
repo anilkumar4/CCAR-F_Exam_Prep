@@ -36,22 +36,32 @@ const App = {
   },
 
   setupNavigation() {
-    
-    // Mobile navigation bindings
-    const mobileBtn = document.getElementById('mobile-menu-btn');
+    // Mobile: bottom tab bar navigation
+    const moreBtn = document.getElementById('mobile-more-btn');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
     const sidebar = document.querySelector('.sidebar');
-    if (mobileBtn && sidebarOverlay) {
-      mobileBtn.addEventListener('click', () => {
-        sidebar.classList.add('open');
-        sidebarOverlay.classList.add('active');
+
+    document.querySelectorAll('.tab-item').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const module = tab.dataset.module;
+        if (module === 'more') {
+          // Toggle sidebar for less-used modules
+          if (sidebar) sidebar.classList.toggle('open');
+          if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
+        } else {
+          this.navigate(module);
+        }
       });
+    });
+
+    if (sidebarOverlay) {
       sidebarOverlay.addEventListener('click', () => {
-        sidebar.classList.remove('open');
+        if (sidebar) sidebar.classList.remove('open');
         sidebarOverlay.classList.remove('active');
       });
     }
 
+    // Desktop: sidebar nav items
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', () => {
         const module = item.dataset.module;
@@ -67,10 +77,21 @@ const App = {
     const overlay = document.getElementById('sidebar-overlay');
     if (sidebar) sidebar.classList.remove('open');
     if (overlay) overlay.classList.remove('active');
-    // Update nav
+    // Update desktop sidebar nav
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const activeNav = document.querySelector(`.nav-item[data-module="${module}"]`);
     if (activeNav) activeNav.classList.add('active');
+    // Update mobile bottom tab bar
+    const tabModules = ['dashboard', 'course', 'flashcards', 'quiz'];
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    const directTab = document.querySelector(`.tab-item[data-module="${module}"]`);
+    if (directTab) {
+      directTab.classList.add('active');
+    } else {
+      // Module is accessed via "More" — highlight the More tab
+      const moreTab = document.querySelector('.tab-item[data-module="more"]');
+      if (moreTab) moreTab.classList.add('active');
+    }
     // Update modules
     document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
     const activeModule = document.getElementById(`module-${module}`);
@@ -87,6 +108,8 @@ const App = {
       case 'mock-exam': MockExam.renderSetup(); break;
     }
     window.scrollTo(0, 0);
+    // Re-render Lucide icons for dynamically injected content
+    setTimeout(() => { if (window.lucide) window.lucide.createIcons(); }, 100);
   },
 
   renderDashboard() {
