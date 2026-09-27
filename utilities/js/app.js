@@ -340,7 +340,7 @@ const App = {
         <div class="card" style="cursor:pointer" onclick="App.navigate('quiz')">
           <div style="font-size:2rem;margin-bottom:8px"><i data-lucide="check-circle" style="width:24px;height:24px;margin-right:8px;vertical-align:middle;color:var(--accent-cyan)"></i></div>
           <div style="font-weight:700;margin-bottom:4px">Practice Quiz</div>
-          <div style="font-size:0.85rem;color:var(--text-secondary)">Test your knowledge with ${typeof PRACTICE_QUESTIONS !== 'undefined' ? PRACTICE_QUESTIONS.length : 65} exam-style questions</div>
+          <div style="font-size:0.85rem;color:var(--text-secondary)">Test your knowledge with ${typeof QUESTIONS_DATA !== 'undefined' ? QUESTIONS_DATA.length : 65} exam-style questions</div>
         </div>
         <div class="card" style="cursor:pointer" onclick="App.navigate('mock-exam')">
           <div style="font-size:2rem;margin-bottom:8px">🏆</div>

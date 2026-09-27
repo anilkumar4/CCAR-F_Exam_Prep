@@ -1,4 +1,4 @@
-const PRACTICE_QUESTIONS = [
+const QUESTIONS_DATA = [
   {
     "id": "q1",
     "scenario": 1,
@@ -8060,3 +8060,8 @@ const PRACTICE_QUESTIONS = [
     "keyTakeaway": "Use structured manifests for crash recovery: agents export state → coordinator loads manifest on resume."
   }
 ];
+
+// If running in browser or Node
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { QUESTIONS_DATA };
+}
