@@ -410,7 +410,7 @@ const App = {
       <div class="card" style="margin-top:20px; border-color: rgba(6, 182, 212, 0.4);">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
           <div style="background: rgba(6, 182, 212, 0.15); padding:8px; border-radius:8px; color:var(--accent-cyan);">
-            <i data-lucide="github"></i>
+            <i data-lucide="code"></i>
           </div>
           <div>
             <h3 style="font-weight:700;">Recommended Python Jupyter Workbooks</h3>
