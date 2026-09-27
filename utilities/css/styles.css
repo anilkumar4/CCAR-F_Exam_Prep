@@ -185,6 +185,77 @@ body {
 /* Base + active states are in the Enhancement section at the bottom */
 /* Legacy slideUpFade removed — replaced by enhanced moduleEnter animation */
 
+/* === Top Action Bar === */
+.top-action-bar-wrapper {
+  position: sticky;
+  top: 16px;
+  z-index: 50;
+  margin-bottom: 24px;
+}
+.top-action-bar {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  max-height: 100px; /* enough for 1-2 lines */
+  overflow: hidden;
+}
+.top-action-bar.hidden {
+  transform: translateY(-20px);
+  opacity: 0;
+  pointer-events: none;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
+  margin-top: -24px;
+}
+.top-bar-mini-toggle {
+  position: absolute;
+  top: 0;
+  right: 24px;
+  z-index: 49;
+  padding: 4px 8px;
+  border-radius: 0 0 8px 8px;
+  border-top: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.top-bar-mini-toggle:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+.top-bar-mini-toggle.hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .top-action-bar-wrapper {
+    top: 70px; /* Below mobile header */
+  }
+  .hide-on-mobile {
+    display: none !important;
+  }
+  .top-action-bar {
+    padding: 10px 16px;
+    justify-content: center;
+  }
+}
+
 /* === Page Header === */
 .page-header {
   margin-bottom: 32px;

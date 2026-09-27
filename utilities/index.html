@@ -98,6 +98,55 @@
     <!-- ===== Main Content Area ===== -->
     <main class="main-content">
 
+      <!-- Top Action Bar -->
+      <div class="top-action-bar-wrapper">
+        <div id="top-action-bar" class="top-action-bar">
+          <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 12px;">
+            <span style="font-weight: 600; color: var(--text-primary);">CCAR-F Exam Prep</span>
+            <span class="hide-on-mobile">• Version 1.0</span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <img src="https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fanilkumar4.github.io%2FCCAR-F_Exam_Prep%2Futilities%2F&countColor=%2379C83D" alt="Site Views" style="height: 24px;"/>
+            
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('review-modal').style.display='flex'">
+              <i data-lucide="message-square" style="width:16px; height:16px; margin-right:6px;"></i> <span class="hide-on-mobile">Leave a Review</span>
+            </button>
+            
+            <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 4px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+              <button id="theme-toggle" class="btn btn-secondary btn-sm" style="padding: 4px; border-radius: 4px; border: none; background: transparent;" onclick="App.toggleTheme()">
+                <i data-lucide="sun" id="theme-icon-light" style="display:none; width:16px; height:16px;"></i>
+                <i data-lucide="moon" id="theme-icon-dark" style="width:16px; height:16px;"></i>
+              </button>
+            </div>
+
+            <button class="btn btn-secondary btn-sm" style="padding: 4px; border-radius: 4px; border: none; background: transparent;" onclick="toggleTopBar()" title="Hide Header">
+              <i data-lucide="chevron-up" style="width:20px; height:20px;"></i>
+            </button>
+          </div>
+        </div>
+        
+        <button id="show-top-bar-btn" class="top-bar-mini-toggle hidden" onclick="toggleTopBar()" title="Show Header">
+          <i data-lucide="chevron-down" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+      
+      <script>
+        function toggleTopBar() {
+          const bar = document.getElementById('top-action-bar');
+          const showBtn = document.getElementById('show-top-bar-btn');
+          const isHidden = bar.classList.contains('hidden');
+          
+          if (isHidden) {
+            bar.classList.remove('hidden');
+            showBtn.classList.add('hidden');
+          } else {
+            bar.classList.add('hidden');
+            showBtn.classList.remove('hidden');
+          }
+        }
+      </script>
+
       <!-- Dashboard Module -->
       <div class="module active" id="module-dashboard">
         <div class="page-header">
@@ -181,29 +230,6 @@
         </div>
         <div id="mock-exam-content"></div>
       </div>
-
-      <!-- Global Footer -->
-      <footer class="global-footer" style="margin-top: 64px; padding-top: 32px; border-top: 1px solid var(--border-color); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 24px;">
-        <div style="font-size: 0.85rem; color: var(--text-muted);">
-          <strong>CCAR-F Exam Prep</strong> • Exam Code: CCAR-F<br>
-          Version 1.0 • July 2026
-        </div>
-        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-          <img src="https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fanilkumar4.github.io%2FCCAR-F_Exam_Prep%2Futilities%2F&countColor=%2379C83D" alt="Site Views" style="height: 28px;"/>
-          
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('review-modal').style.display='flex'">
-            <i data-lucide="message-square" style="width:16px; height:16px; margin-right:6px;"></i> Leave a Review
-          </button>
-          
-          <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Theme</span>
-            <button id="theme-toggle" class="btn btn-secondary btn-sm" style="padding: 4px 8px; border-radius: 4px;" onclick="App.toggleTheme()">
-              <i data-lucide="sun" id="theme-icon-light" style="display:none; width:16px; height:16px;"></i>
-              <i data-lucide="moon" id="theme-icon-dark" style="width:16px; height:16px;"></i>
-            </button>
-          </div>
-        </div>
-      </footer>
 
     </main>
   </div>
