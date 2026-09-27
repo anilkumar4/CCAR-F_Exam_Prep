@@ -112,11 +112,40 @@ const App = {
       const moreTab = document.querySelector('.tab-item[data-module="more"]');
       if (moreTab) moreTab.classList.add('active');
     }
-    // Update modules
+    // Update modules — re-trigger fade-in animation
     document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
     const activeModule = document.getElementById(`module-${module}`);
-    if (activeModule) activeModule.classList.add('active');
-    // Initialize module content
+    if (activeModule) {
+      // Show skeleton loader briefly for premium feel
+      const contentId = module === 'dashboard' ? 'dashboard-content' :
+                        module === 'course' ? 'course-content' :
+                        module === 'study' ? 'study-content' :
+                        module === 'flashcards' ? 'flashcards-content' :
+                        module === 'quiz' ? 'quiz-content' :
+                        module === 'scenarios' ? 'scenarios-content' :
+                        module === 'patterns' ? 'patterns-content' :
+                        module === 'cheatsheets' ? 'cheatsheets-content' :
+                        module === 'mock-exam' ? 'mock-exam-content' : null;
+      const contentEl = contentId ? document.getElementById(contentId) : null;
+      if (contentEl && !contentEl.innerHTML.trim()) {
+        contentEl.innerHTML = `
+          <div class="skeleton-loader">
+            <div class="skeleton-block skeleton-title"></div>
+            <div class="skeleton-block skeleton-text"></div>
+            <div class="skeleton-block skeleton-text-short"></div>
+            <div class="skeleton-row">
+              <div class="skeleton-block skeleton-card"></div>
+              <div class="skeleton-block skeleton-card"></div>
+              <div class="skeleton-block skeleton-card"></div>
+            </div>
+          </div>
+        `;
+      }
+      // Force animation re-trigger by briefly removing display
+      void activeModule.offsetWidth;
+      activeModule.classList.add('active');
+    }
+    // Initialize module content (replaces skeleton)
     switch(module) {
       case 'dashboard': this.renderDashboard(); break;
       case 'course': Course.renderSetup(); break;

@@ -182,13 +182,8 @@ body {
 }
 
 /* === Module Container === */
-.module { display: none; animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.module.active { display: block; }
-
-@keyframes slideUpFade {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+/* Base + active states are in the Enhancement section at the bottom */
+/* Legacy slideUpFade removed — replaced by enhanced moduleEnter animation */
 
 /* === Page Header === */
 .page-header {
@@ -511,3 +506,163 @@ code, .code {
   .nav-item { padding: 14px 16px; font-size: 0.9rem; }
 }
 
+/* ============================================================
+   Enhancement 1: Card Hover Glow & Scale
+   Adds a more prominent glow effect on hover
+   ============================================================ */
+.card[style*="cursor:pointer"]:hover,
+.card.clickable:hover {
+  box-shadow: 0 12px 48px -8px rgba(139, 92, 246, 0.25),
+              0 0 0 1px rgba(139, 92, 246, 0.1);
+  transform: translateY(-4px) scale(1.015);
+}
+.card[style*="cursor:pointer"]:active,
+.card.clickable:active {
+  transform: translateY(-1px) scale(1.005);
+  transition-duration: 0.1s;
+}
+
+/* ============================================================
+   Enhancement 2: Module Fade-In Transition
+   Re-triggers animation each time a module becomes active
+   ============================================================ */
+.module {
+  display: none;
+}
+.module.active {
+  display: block;
+  animation: moduleEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes moduleEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
+  }
+  60% {
+    filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0px);
+  }
+}
+
+/* ============================================================
+   Enhancement 3: Skeleton Loader
+   Pulse placeholder shown while content renders
+   ============================================================ */
+.skeleton-loader {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+.skeleton-block {
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    var(--bg-card-hover) 50%,
+    var(--bg-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+.skeleton-title {
+  width: 40%;
+  height: 28px;
+}
+.skeleton-text {
+  width: 75%;
+  height: 14px;
+}
+.skeleton-text-short {
+  width: 50%;
+  height: 14px;
+}
+.skeleton-card {
+  height: 120px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+}
+.skeleton-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ============================================================
+   Enhancement 4: Confetti Particles
+   Celebratory burst on passing a quiz or mock exam
+   ============================================================ */
+.confetti-piece {
+  position: fixed;
+  top: -10px;
+  width: 10px;
+  height: 10px;
+  z-index: 10000;
+  pointer-events: none;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(45vh) rotate(360deg) scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) rotate(720deg) scale(0.3);
+  }
+}
+
+/* ============================================================
+   Enhancement 5: Stagger Animation for Card Grids
+   Cards in grids fade in one by one for a premium feel
+   ============================================================ */
+.grid > .card,
+.stagger-children > .card {
+  opacity: 0;
+  animation: staggerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.grid > .card:nth-child(1),
+.stagger-children > .card:nth-child(1)  { animation-delay: 0.04s; }
+.grid > .card:nth-child(2),
+.stagger-children > .card:nth-child(2)  { animation-delay: 0.08s; }
+.grid > .card:nth-child(3),
+.stagger-children > .card:nth-child(3)  { animation-delay: 0.12s; }
+.grid > .card:nth-child(4),
+.stagger-children > .card:nth-child(4)  { animation-delay: 0.16s; }
+.grid > .card:nth-child(5),
+.stagger-children > .card:nth-child(5)  { animation-delay: 0.20s; }
+.grid > .card:nth-child(6),
+.stagger-children > .card:nth-child(6)  { animation-delay: 0.24s; }
+.grid > .card:nth-child(7),
+.stagger-children > .card:nth-child(7)  { animation-delay: 0.28s; }
+.grid > .card:nth-child(8),
+.stagger-children > .card:nth-child(8)  { animation-delay: 0.32s; }
+.grid > .card:nth-child(9),
+.stagger-children > .card:nth-child(9)  { animation-delay: 0.36s; }
+.grid > .card:nth-child(10),
+.stagger-children > .card:nth-child(10) { animation-delay: 0.40s; }
+.grid > .card:nth-child(n+11)           { animation-delay: 0.44s; }
+
+@keyframes staggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
